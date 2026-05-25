@@ -181,3 +181,43 @@ def company_register():
                             <input name="email" type="email" class="form-control mb-2" placeholder="Official Email" required>
                             <input name="phone" class="form-control mb-2" placeholder="Contact Number" required>
                             <input name="password" type="password" class="form-control mb-2
+@app.route('/admin', methods=['GET', 'POST'])
+def admin():
+    if request.method == 'POST':
+        if request.form['password'] == ADMIN_PASSWORD:
+            session['admin'] = True
+            return redirect('/admin')
+        flash('Wrong Password!')
+
+    if not session.get('admin'):
+        content = '''
+        <div class="container mt-5">
+            <div class="row justify-content-center">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="text-center mb-4">Admin Login</h3>
+                            <form method="post">
+                                <input name="password" type="password" class="form-control mb-3" placeholder="Admin Password" required>
+                                <button class="btn btn-dark w-100">Login</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        '''
+        return render_template_string(BASE_HTML, content=content)
+
+    conn = get_db()
+    companies = conn.execute('SELECT * FROM companies ORDER BY id DESC').fetchall()
+    jobs = conn.execute('SELECT j.*, c.company_name FROM jobs j JOIN companies c ON j.company_id = c.id ORDER BY j.id DESC').fetchall()
+    apps = conn.execute('SELECT COUNT(*) as total FROM applications').fetchone()
+    conn.close()
+
+    comp_rows = ''.join([f'<tr><td>{c["id"]}</td><td>{c["company_name"]}</td><td>{c["email"]}</td><td>{c["registered_on"]}</td><td><span class="badge bg-success">{c["status"]}</span></td></tr>' for c in companies])
+    job_rows = ''.join([f'<tr><td>{j["id"]}</td><td>{j["title"]}</td><td>{j["company_name"]}</td><td>{j["location"]}</td><td>{j["posted_on"]}</td></tr>' for j in jobs])
+
+    content = f'''
+    <div class="container mt-4">
+        <h3>Admin Dashboard - Surejob</h3>
+        <a href="/logout" class="btn btn-danger btn-sm mb-3">Logout
