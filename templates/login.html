@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5" style="max-width:500px">
+    <div class="card">
+        <div class="card-body p-4">
+            <h3 class="text-center mb-4"><i class="fas fa-building"></i> Employer Login</h3>
+            <form method="post">
+                <div class="mb-3">
+                    <label class="form-label">Company Email</label>
+                    <input type="email" name="email" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+                <button class="btn btn-primary w-100 mb-3">Login</button>
+                <div class="text-center">
+                    <a href="/company-register">New Employer? Register Here</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
