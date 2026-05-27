@@ -42,22 +42,25 @@ def home():
     search = request.args.get('search', '')
     location = request.args.get('location', '')
     category = request.args.get('category', '')
-    query = 'SELECT j.*, c.company_name, c.logo FROM jobs j JOIN companies c ON j.company_id = c.id WHERE 1=1'
+    
+    # JOIN hata diya, direct jobs table se utha rahe
+    query = 'SELECT * FROM jobs WHERE 1=1'
     params = []
     if search:
-        query += ' AND j.title LIKE?'
+        query += ' AND title LIKE?'
         params.append(f'%{search}%')
     if location:
-        query += ' AND j.location=?'
+        query += ' AND location=?'
         params.append(location)
     if category:
-        query += ' AND j.category=?'
+        query += ' AND category=?'
         params.append(category)
-    query += ' ORDER BY j.id DESC LIMIT 50'
+    query += ' ORDER BY id DESC LIMIT 50'
+    
     jobs = conn.execute(query, params).fetchall()
     conn.close()
     return render_template('index.html', jobs=jobs, locations=LOCATIONS, categories=JOB_CATEGORIES, search=search, location=location, category=category)
-
+    
 @app.route('/job/<int:job_id>', methods=['GET', 'POST'])
 def job_detail(job_id):
     conn = get_db()
