@@ -159,7 +159,37 @@ def company_dashboard():
     apps = conn.execute('SELECT a.*, j.title FROM applications a JOIN jobs j ON a.job_id = j.id WHERE j.company_id=? ORDER BY a.id DESC LIMIT 10', (session['company_id'],)).fetchall()
     conn.close()
     return render_template('company_dashboard.html', jobs=jobs, apps=apps, company=company)
-
+@app.route('/post-job', methods=['GET', 'POST'])
+def post_job():
+    if 'company_id' not in session:
+        return redirect('/company-login')
+    
+    # Define these if not already defined at top of main.py
+    JOB_CATEGORIES = ['Sales', 'Marketing', 'IT', 'Finance', 'HR', 'Operations']
+    LOCATIONS = ['Borivali', 'Panvel', 'Nashik', 'Pune', 'Virar', 'Mumbai']
+    
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        description = request.form.get('description', '').strip()
+        salary = request.form.get('salary', '').strip()
+        location = request.form.get('location', '').strip()
+        category = request.form.get('category', '').strip()
+        
+        if not all([title, salary, location, category]):
+            flash('Title, Salary, Location aur Category required hai!')
+            return render_template('post_job.html', categories=JOB_CATEGORIES, locations=LOCATIONS)
+            
+        conn = get_db()
+        conn.execute('''INSERT INTO jobs (title, description, salary, location, category, company_id) 
+                        VALUES (?, ?, ?, ?, ?, ?)''', 
+                     (title, description, salary, location, category, session['company_id']))
+        conn.commit()
+        conn.close()
+        flash('Job successfully posted!')
+        return redirect('/company-dashboard')
+        
+    # GET request
+    return render_template('post_job.html', categories=JOB_CATEGORIES, locations=LOCATIONS)
 @app.route('/post-job', methods=['GET', 'POST'])
 def post_job():
     if 'company_id' not in session:
