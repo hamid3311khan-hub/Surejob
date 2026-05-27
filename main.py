@@ -45,7 +45,7 @@ def home():
         category = request.args.get('category', '')
         
         query = '''
-            SELECT j.id, j.title, j.description, j.salary, j.location, j.category,
+            SELECT j.id, j.title, j.description, j.salary, j.location, j.category, j.skills
                    c.company_name, c.logo 
             FROM jobs j 
             LEFT JOIN companies c ON j.company_id = c.id 
