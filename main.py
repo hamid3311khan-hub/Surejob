@@ -69,19 +69,19 @@ def job_detail(job_id):
         name = request.form.get('name', '').strip()
         email = request.form.get('email', '').strip()
         phone = request.form.get('phone', '').strip()
-        
+
         if not all([name, email, phone]):
             flash('Name, Email aur Phone required hai!')
             conn.close()
             return redirect(f'/job/{job_id}')
-            
+
         resume = request.files.get('resume')
         resume_path = ''
         if resume and resume.filename and allowed_file(resume.filename):
             filename = secure_filename(f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{resume.filename}")
             resume_path = os.path.join(RESUME_FOLDER, filename)
             resume.save(resume_path)
-            
+
         conn.execute('INSERT INTO applications (job_id, name, email, phone, resume, cover_letter, applied_on) VALUES (?,?,?,?,?,?,?)',
             (job_id, name, email, phone, resume_path, request.form.get('cover_letter',''), datetime.now().strftime('%Y-%m-%d %H:%M')))
         conn.commit()
@@ -99,23 +99,23 @@ def company_register():
         email = request.form.get('email', '').strip()
         phone = request.form.get('phone', '').strip()
         password = request.form.get('password', '').strip()
-        
+
         if not all([company_name, email, phone, password]):
             flash('Company Name, Email, Phone aur Password required hai!')
             return render_template('company_register.html')
-        
+
         logo = request.files.get('logo')
         logo_path = ''
         if logo and logo.filename and allowed_file(logo.filename):
             filename = secure_filename(f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{logo.filename}")
             logo_path = os.path.join(UPLOAD_FOLDER, filename)
             logo.save(logo_path)
-        
+
         conn = get_db()
         try:
             conn.execute('INSERT INTO companies (company_name, gst_no, email, phone, password, logo, registered_on, plan_expiry) VALUES (?,?,?,?,?,?,?,?)',
-                (company_name, gst_no, email, phone, password, logo_path, 
-                 datetime.now().strftime('%Y-%m-%d'), 
+                (company_name, gst_no, email, phone, password, logo_path,
+                 datetime.now().strftime('%Y-%m-%d'),
                  (datetime.now() + timedelta(days=365)).strftime('%Y-%m-%d')))
             conn.commit()
             flash('Registration successful! Please login.')
@@ -127,7 +127,7 @@ def company_register():
         except Exception as e:
             conn.close()
             flash(f'Kuch error aa gaya: {str(e)}')
-    
+
     return render_template('company_register.html')
 
 @app.route('/company-login', methods=['GET', 'POST'])
@@ -135,11 +135,11 @@ def company_login():
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '').strip()
-        
+
         if not email or not password:
             flash('Email aur Password dono dalo!')
             return render_template('company_login.html')
-            
+
         conn = get_db()
         company = conn.execute('SELECT * FROM companies WHERE email=? AND password=?', (email, password)).fetchone()
         conn.close()
@@ -149,65 +149,40 @@ def company_login():
             return redirect('/company-dashboard')
         flash('Invalid credentials!')
     return render_template('company_login.html')
+
 @app.route('/company-dashboard')
 def company_dashboard():
     if 'company_id' not in session:
         return redirect('/company-login')
     conn = get_db()
-    company = conn.execute('SELECT * FROM companies WHERE id=?', (session['company_id'],)).fetchone()  # ← Ye line add ki
+    company = conn.execute('SELECT * FROM companies WHERE id=?', (session['company_id'],)).fetchone()
     jobs = conn.execute('SELECT * FROM jobs WHERE company_id=? ORDER BY id DESC', (session['company_id'],)).fetchall()
     apps = conn.execute('SELECT a.*, j.title FROM applications a JOIN jobs j ON a.job_id = j.id WHERE j.company_id=? ORDER BY a.id DESC LIMIT 10', (session['company_id'],)).fetchall()
     conn.close()
     return render_template('company_dashboard.html', jobs=jobs, apps=apps, company=company)
+
 @app.route('/post-job', methods=['GET', 'POST'])
 def post_job():
     if 'company_id' not in session:
         return redirect('/company-login')
-    
-    # Define these if not already defined at top of main.py
-    JOB_CATEGORIES = ['Sales', 'Marketing', 'IT', 'Finance', 'HR', 'Operations']
-    LOCATIONS = ['Borivali', 'Panvel', 'Nashik', 'Pune', 'Virar', 'Mumbai']
-    
+
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
         description = request.form.get('description', '').strip()
         salary = request.form.get('salary', '').strip()
         location = request.form.get('location', '').strip()
         category = request.form.get('category', '').strip()
-        
+        experience = request.form.get('experience', '').strip()
+        skills = request.form.get('skills', '').strip()
+        contact = request.form.get('contact', '').strip()
+
         if not all([title, salary, location, category]):
             flash('Title, Salary, Location aur Category required hai!')
             return render_template('post_job.html', categories=JOB_CATEGORIES, locations=LOCATIONS)
-            
-        conn = get_db()
-        conn.execute('''INSERT INTO jobs (title, description, salary, location, category, company_id) 
-                        VALUES (?, ?, ?, ?, ?, ?)''', 
-                     (title, description, salary, location, category, session['company_id']))
-        conn.commit()
-        conn.close()
-        flash('Job successfully posted!')
-        return redirect('/company-dashboard')
-        
-    # GET request
-    return render_template('post_job.html', categories=JOB_CATEGORIES, locations=LOCATIONS)
-@app.route('/post-job', methods=['GET', 'POST'])
-def post_job():
-    if 'company_id' not in session:
-        return redirect('/company-login')
-    if request.method == 'POST':
-        title = request.form.get('title', '').strip()
-        location = request.form.get('location', '').strip()
-        category = request.form.get('category', '').strip()
-        
-        if not all([title, location, category]):
-            flash('Title, Location aur Category required hai!')
-            return render_template('post_job.html', categories=JOB_CATEGORIES, locations=LOCATIONS)
-            
+
         conn = get_db()
         conn.execute('INSERT INTO jobs (company_id, title, location, salary, experience, category, description, skills, contact, posted_on) VALUES (?,?,?,?,?,?,?,?,?,?)',
-            (session['company_id'], title, location, request.form.get('salary',''),
-             request.form.get('experience',''), category, request.form.get('description',''), 
-             request.form.get('skills',''), request.form.get('contact',''), datetime.now().strftime('%Y-%m-%d')))
+            (session['company_id'], title, location, salary, experience, category, description, skills, contact, datetime.now().strftime('%Y-%m-%d')))
         conn.commit()
         conn.close()
         flash('Job posted successfully!')
@@ -233,41 +208,17 @@ def admin():
 @app.route('/static/<path:filename>')
 def static_files(filename):
     return send_from_directory('.', filename)
+
 @app.route('/company-logout')
 def company_logout():
     session.pop('company_id', None)
     session.pop('company_name', None)
     return redirect('/')
+
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect('/')
-    @app.route('/post-job', methods=['GET', 'POST'])
-def post_job():
-    if 'company_id' not in session:
-        return redirect('/company-login')
-    
-    if request.method == 'POST':
-        title = request.form.get('title', '').strip()
-        description = request.form.get('description', '').strip()
-        salary = request.form.get('salary', '').strip()
-        location = request.form.get('location', '').strip()
-        category = request.form.get('category', '').strip()
-        
-        if not title or not salary or not location:
-            flash('Title, Salary aur Location zaroori hai!')
-            return render_template('post_job.html')
-            
-        conn = get_db()
-        conn.execute('''INSERT INTO jobs (title, description, salary, location, category, company_id) 
-                        VALUES (?, ?, ?, ?, ?, ?)''', 
-                     (title, description, salary, location, category, session['company_id']))
-        conn.commit()
-        conn.close()
-        flash('Job successfully posted!')
-        return redirect('/company-dashboard')
-        
-    return render_template('post_job.html')
 
 # if __name__ == '__main__':
 # app.run(debug=False)
