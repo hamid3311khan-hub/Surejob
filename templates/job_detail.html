@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ job.title }} - SureJob</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-4">
+    <a href="/" class="btn btn-secondary mb-3">← Back to Jobs</a>
+
+    <div class="card">
+        <div class="card-body">
+            <h2>{{ job.title }}</h2>
+            <h5>{{ job.company_name }}</h5>
+            <p><strong>Location:</strong> {{ job.location }}</p>
+            <p><strong>Salary:</strong> Rs {{ job.salary }}</p>
+            <p><strong>Category:</strong> {{ job.category }}</p>
+            <p><strong>Experience:</strong> {{ job.experience }}</p>
+            <p><strong>Skills:</strong> {{ job.skills }}</p>
+            <hr>
+            <p><strong>Description:</strong><br>{{ job.description }}</p>
+            <p><strong>Contact:</strong> {{ job.contact }}</p>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-body">
+            <h4>Apply for this Job</h4>
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                <div class="alert alert-info">{{ messages[0] }}</div>
+              {% endif %}
+            {% endwith %}
+
+            <form method="POST" enctype="multipart/form-data">
+                <input name="name" class="form-control mb-2" placeholder="Your Name" required>
+                <input name="email" type="email" class="form-control mb-2" placeholder="Your Email" required>
+                <input name="phone" class="form-control mb-2" placeholder="Your Phone" required>
+                <label class="mb-1">Upload Resume:</label>
+                <input name="resume" type="file" class="form-control mb-2">
+                <textarea name="cover_letter" class="form-control mb-3" placeholder="Cover Letter" rows="4"></textarea>
+                <button type="submit" class="btn btn-primary">Submit Application</button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+  </html>
