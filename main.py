@@ -190,7 +190,45 @@ def delete_job(job_id):
     conn.close()
     flash('Job deleted successfully!')
     return redirect('/company-dashboard')
-
+@app.route('/edit-job/<int:job_id>', methods=['GET', 'POST'])
+def edit_job(job_id):
+    if 'company_id' not in session:
+        return redirect('/company-login')
+    
+    conn = get_db()
+    job = conn.execute('SELECT * FROM jobs WHERE id=? AND company_id=?', (job_id, session['company_id'])).fetchone()
+    
+    if not job:
+        conn.close()
+        flash('Job not found!')
+        return redirect('/company-dashboard')
+    
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        description = request.form.get('description', '').strip()
+        salary = request.form.get('salary', '').strip()
+        location = request.form.get('location', '').strip()
+        category = request.form.get('category', '').strip()
+        experience = request.form.get('experience', '').strip()
+        skills = request.form.get('skills', '').strip()
+        contact = request.form.get('contact', '').strip()
+        
+        if not all([title, salary, location, category]):
+            flash('Title, Salary, Location aur Category required hai!')
+            conn.close()
+            return render_template('edit_job.html', job=job, categories=JOB_CATEGORIES, locations=LOCATIONS)
+        
+        conn.execute('''UPDATE jobs SET title=?, description=?, salary=?, location=?, 
+                        category=?, experience=?, skills=?, contact=? WHERE id=?''',
+                    (title, description, salary, location, category, experience, skills, contact, job_id))
+        conn.commit()
+        conn.close()
+        flash('Job updated successfully!')
+        return redirect('/company-dashboard')
+    
+    conn.close()
+    return render_template('edit_job.html', job=job, categories=JOB_CATEGORIES, locations=LOCATIONS)
+    
 @app.route('/post-job', methods=['GET', 'POST'])
 def post_job():
     if 'company_id' not in session:
