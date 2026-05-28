@@ -59,8 +59,9 @@ def home():
             query += ' AND j.location =?'
             params.append(location)
         if category:
-            query += ' AND j.category =?'
-            params.append(category)
+    query += ' AND LOWER(j.category) = LOWER(?)'
+    params.append(category)
+    
         query += ' ORDER BY j.id DESC LIMIT 50'
 
         jobs = conn.execute(query, params).fetchall()
