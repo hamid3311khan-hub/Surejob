@@ -169,7 +169,13 @@ def company_dashboard():
         return redirect('/company-login')
     conn = get_db()
     company = conn.execute('SELECT * FROM companies WHERE id=?', (session['company_id'],)).fetchone()
-    jobs = conn.execute('SELECT DISTINCT * FROM jobs WHERE company_id=? ORDER BY id DESC', (session['company_id'],)).fetchall()
+    jobs = conn.execute('''
+    SELECT * FROM jobs WHERE id IN (
+        SELECT MIN(id) FROM jobs 
+        WHERE company_id=? 
+        GROUP BY title, location, salary
+    ) ORDER BY id DESC
+''', (session['company_id'],)).fetchall()   
     apps = conn.execute('SELECT a.*, j.title FROM applications a JOIN jobs j ON a.job_id = j.id WHERE j.company_id=? ORDER BY a.id DESC LIMIT 10', (session['company_id'],)).fetchall()
     conn.close()
     return render_template('company_dashboard.html', jobs=jobs, apps=apps, company=company)
