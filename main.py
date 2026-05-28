@@ -162,6 +162,7 @@ def company_login():
             return redirect('/company-dashboard')
         flash('Invalid credentials!')
     return render_template('company_login.html')
+
 @app.route('/company-dashboard')
 def company_dashboard():
     if 'company_id' not in session:
@@ -170,8 +171,8 @@ def company_dashboard():
     company = conn.execute('SELECT * FROM companies WHERE id=?', (session['company_id'],)).fetchone()
     jobs = conn.execute('''
         SELECT * FROM jobs WHERE id IN (
-            SELECT MIN(id) FROM jobs 
-            WHERE company_id=? 
+            SELECT MIN(id) FROM jobs
+            WHERE company_id=?
             GROUP BY title, location, salary, category
         ) ORDER BY id DESC
     ''', (session['company_id'],)).fetchall()
@@ -217,6 +218,7 @@ def post_job():
         flash('Job posted successfully!')
         return redirect('/company-dashboard')
     return render_template('post_job.html', categories=JOB_CATEGORIES, locations=LOCATIONS)
+
 @app.route('/check-db')
 def check_db():
     conn = get_db()
@@ -225,6 +227,7 @@ def check_db():
     companies = conn.execute('SELECT id, company_name FROM companies').fetchall()
     conn.close()
     return f"<h2>Jobs: {job_count['total']}</h2><br><b>Jobs:</b> {jobs}<br><br><b>Companies:</b> {companies}"
+
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
     if request.method == 'POST':
@@ -255,15 +258,6 @@ def company_logout():
 def logout():
     session.clear()
     return redirect('/')
-@app.route('/delete-job/<int:job_id>')
-def delete_job(job_id):
-    if 'company_id' not in session:
-        return redirect('/company-login')
-    conn = get_db()
-    conn.execute('DELETE FROM jobs WHERE id=? AND company_id=?', (job_id, session['company_id']))
-    conn.commit()
-    conn.close()
-    flash('Job deleted successfully!')
-    return redirect('/company-dashboard')
+
 # if __name__ == '__main__':
 # app.run(debug=False)
