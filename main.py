@@ -206,7 +206,14 @@ def post_job():
         flash('Job posted successfully!')
         return redirect('/company-dashboard')
     return render_template('post_job.html', categories=JOB_CATEGORIES, locations=LOCATIONS)
-
+@app.route('/check-db')
+def check_db():
+    conn = get_db()
+    job_count = conn.execute('SELECT COUNT(*) as total FROM jobs').fetchone()
+    jobs = conn.execute('SELECT id, title, company_id, location, category FROM jobs').fetchall()
+    companies = conn.execute('SELECT id, company_name FROM companies').fetchall()
+    conn.close()
+    return f"<h2>Jobs: {job_count['total']}</h2><br><b>Jobs:</b> {jobs}<br><br><b>Companies:</b> {companies}"
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
     if request.method == 'POST':
