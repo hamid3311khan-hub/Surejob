@@ -237,6 +237,13 @@ def company_logout():
 def logout():
     session.clear()
     return redirect('/')
-
+@app.route('/check-db')
+def check_db():
+    conn = get_db()
+    job_count = conn.execute('SELECT COUNT(*) as total FROM jobs').fetchone()
+    jobs = conn.execute('SELECT id, title, company_id FROM jobs LIMIT 10').fetchall()
+    companies = conn.execute('SELECT id, company_name FROM companies').fetchall()
+    conn.close()
+    return f"Jobs: {job_count['total']}<br>Jobs Data: {jobs}<br>Companies: {companies}"
 # if __name__ == '__main__':
 # app.run(debug=False)
