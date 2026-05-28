@@ -330,19 +330,5 @@ def logout():
     session.clear()
     return redirect('/')
 
-@app.route('/fix-job-once')
-def fix_job_once():
-    try:
-        conn = get_db()
-        conn.execute("UPDATE jobs SET company_id=1, category='IT Software' WHERE location='Mumbai' AND title='Software developer'")
-        conn.execute("UPDATE jobs SET company_id=1 WHERE location='Delhi' AND title='Software developer'")
-        conn.commit()
-
-        jobs = conn.execute("SELECT id, title, company_id, category, location FROM jobs").fetchall()
-        conn.close()
-        return f"Fixed! Updated jobs: {jobs}"
-    except Exception as e:
-        return f"Error: {e}"
-
 # if __name__ == '__main__':
 # app.run(debug=False)
