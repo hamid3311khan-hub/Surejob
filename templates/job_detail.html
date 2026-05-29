@@ -1,49 +1,133 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ job.title }} - SureJob</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {margin:0; padding:0; box-sizing:border-box; font-family:'Inter', sans-serif;}
+        body {background:#f8fafc; color:#0f172a;}
+        
+        nav {background:#fff; padding:16px 5%; box-shadow:0 1px 3px rgba(0,0,0,0.05); display:flex; justify-content:space-between; align-items:center;}
+        .logo {font-size:24px; font-weight:700; color:#2563eb; text-decoration:none;}
+        .logo span {color:#0f172a;}
+        
+        .container {max-width:1100px; margin:40px auto; padding:0 5%; display:grid; grid-template-columns:1fr 340px; gap:32px;}
+        
+        .main-content {background:#fff; padding:32px; border-radius:12px; border:1px solid #e2e8f0;}
+        .job-header h1 {font-size:28px; font-weight:700; margin-bottom:8px;}
+        .company-name {color:#2563eb; font-weight:600; font-size:18px; margin-bottom:20px;}
+        
+        .highlights {display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; padding:20px; background:#f8fafc; border-radius:12px; margin:24px 0;}
+        .highlight {display:flex; align-items:center; gap:12px;}
+        .highlight i {color:#2563eb; font-size:20px; width:24px;}
+        .highlight div span {display:block; font-size:13px; color:#64748b;}
+        .highlight div strong {font-size:15px; font-weight:600;}
+        
+        .section {margin:32px 0;}
+        .section h3 {font-size:20px; font-weight:600; margin-bottom:16px;}
+        .description {line-height:1.7; color:#334155;}
+        .skills {display:flex; gap:8px; flex-wrap:wrap;}
+        .skill-tag {background:#eff6ff; color:#2563eb; padding:8px 16px; border-radius:8px; font-size:14px; font-weight:500;}
+        
+        .sidebar {position:sticky; top:20px; height:fit-content;}
+        .apply-card {background:#fff; padding:24px; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:20px;}
+        .apply-btn {width:100%; background:#2563eb; color:#fff; border:none; padding:16px; border-radius:8px; font-weight:600; font-size:16px; cursor:pointer; margin-bottom:12px;}
+        .action-btns {display:flex; gap:8px;}
+        .action-btn {flex:1; padding:12px; border:1px solid #e2e8f0; background:#fff; border-radius:8px; cursor:pointer; font-weight:500;}
+        .action-btn:hover {background:#f8fafc;}
+        
+        .company-card {background:#fff; padding:24px; border-radius:12px; border:1px solid #e2e8f0; text-align:center;}
+        .company-logo {width:64px; height:64px; background:#eff6ff; border-radius:12px; margin:0 auto 12px; display:flex; align-items:center; justify-content:center; font-size:28px; color:#2563eb;}
+        
+        @media(max-width:900px){
+            .container {grid-template-columns:1fr;}
+            .sidebar {position:static;}
+        }
+    </style>
 </head>
 <body>
-<div class="container mt-4">
-    <a href="/" class="btn btn-secondary mb-3">← Back to Jobs</a>
+    <nav>
+        <a href="/" class="logo">Sure<span>Job</span></a>
+        <a href="/company-login" style="background:#2563eb; color:#fff; padding:10px 20px; border-radius:8px; text-decoration:none;">Post a Job</a>
+    </nav>
 
-    <div class="card">
-        <div class="card-body">
-            <h2>{{ job.title }}</h2>
-            <h5>{{ job.company_name }}</h5>
-            <p><strong>Location:</strong> {{ job.location }}</p>
-            <p><strong>Salary:</strong> Rs {{ job.salary }}</p>
-            <p><strong>Category:</strong> {{ job.category }}</p>
-            <p><strong>Experience:</strong> {{ job.experience }}</p>
-            <p><strong>Skills:</strong> {{ job.skills }}</p>
-            <hr>
-            <p><strong>Description:</strong><br>{{ job.description }}</p>
-            <p><strong>Contact:</strong> {{ job.contact }}</p>
+    <div class="container">
+        <div class="main-content">
+            <div class="job-header">
+                <h1>{{ job.title }}</h1>
+                <div class="company-name">{{ job.company_name }}</div>
+            </div>
+
+            <div class="highlights">
+                <div class="highlight">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <div><span>Location</span><strong>{{ job.location }}</strong></div>
+                </div>
+                <div class="highlight">
+                    <i class="fa-solid fa-briefcase"></i>
+                    <div><span>Experience</span><strong>{{ job.experience or '0-2 Years' }}</strong></div>
+                </div>
+                <div class="highlight">
+                    <i class="fa-solid fa-money-bill-wave"></i>
+                    <div><span>Salary</span><strong>{{ job.salary }}</strong></div>
+                </div>
+                <div class="highlight">
+                    <i class="fa-solid fa-layer-group"></i>
+                    <div><span>Category</span><strong>{{ job.category }}</strong></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Job Description</h3>
+                <div class="description">{{ job.description or 'No description provided.' }}</div>
+            </div>
+
+            {% if job.skills %}
+            <div class="section">
+                <h3>Key Skills</h3>
+                <div class="skills">
+                    {% for skill in job.skills.split(',') %}
+                    <span class="skill-tag">{{ skill.strip() }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="sidebar">
+            <div class="apply-card">
+                <button class="apply-btn" onclick="document.getElementById('applyForm').scrollIntoView({behavior:'smooth'})">
+                    <i class="fa fa-paper-plane"></i> Apply Now
+                </button>
+                <div class="action-btns">
+                    <button class="action-btn" onclick="alert('Job Saved!')"><i class="far fa-bookmark"></i> Save</button>
+                    <button class="action-btn" onclick="window.open('https://wa.me/?text=Check this job: {{ job.title }} at {{ job.company_name }} - {{ request.url }}')"><i class="fab fa-whatsapp"></i> Share</button>
+                </div>
+            </div>
+
+            <div class="company-card">
+                <div class="company-logo"><i class="fa fa-building"></i></div>
+                <h3 style="margin-bottom:8px;">{{ job.company_name }}</h3>
+                <p style="color:#64748b; font-size:14px;">Leading company hiring for multiple roles</p>
+            </div>
         </div>
     </div>
 
-    <div class="card mt-4">
-        <div class="card-body">
-            <h4>Apply for this Job</h4>
-            {% with messages = get_flashed_messages() %}
-              {% if messages %}
-                <div class="alert alert-info">{{ messages[0] }}</div>
-              {% endif %}
-            {% endwith %}
-
+    <!-- Apply Form - Ye neeche add kar dena -->
+    <div id="applyForm" style="max-width:1100px; margin:0 auto 60px; padding:0 5%;">
+        <div style="background:#fff; padding:32px; border-radius:12px; border:1px solid #e2e8f0;">
+            <h3 style="margin-bottom:20px;">Apply for {{ job.title }}</h3>
             <form method="POST" enctype="multipart/form-data">
-                <input name="name" class="form-control mb-2" placeholder="Your Name" required>
-                <input name="email" type="email" class="form-control mb-2" placeholder="Your Email" required>
-                <input name="phone" class="form-control mb-2" placeholder="Your Phone" required>
-                <label class="mb-1">Upload Resume:</label>
-                <input name="resume" type="file" class="form-control mb-2">
-                <textarea name="cover_letter" class="form-control mb-3" placeholder="Cover Letter" rows="4"></textarea>
-                <button type="submit" class="btn btn-primary">Submit Application</button>
+                <input type="text" name="name" placeholder="Full Name" required style="width:100%; padding:12px; margin-bottom:12px; border:1px solid #e2e8f0; border-radius:8px;">
+                <input type="email" name="email" placeholder="Email" required style="width:100%; padding:12px; margin-bottom:12px; border:1px solid #e2e8f0; border-radius:8px;">
+                <input type="tel" name="phone" placeholder="Phone" required style="width:100%; padding:12px; margin-bottom:12px; border:1px solid #e2e8f0; border-radius:8px;">
+                <input type="file" name="resume" accept=".pdf,.doc,.docx" style="width:100%; padding:12px; margin-bottom:12px; border:1px solid #e2e8f0; border-radius:8px;">
+                <button type="submit" style="width:100%; background:#2563eb; color:#fff; border:none; padding:14px; border-radius:8px; font-weight:600;">Submit Application</button>
             </form>
         </div>
     </div>
-</div>
 </body>
-  </html>
+                </html>
