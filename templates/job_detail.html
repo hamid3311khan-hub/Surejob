@@ -1,133 +1,323 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ job.title }} - SureJob</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {margin:0; padding:0; box-sizing:border-box; font-family:'Inter', sans-serif;}
-        body {background:#f8fafc; color:#0f172a;}
-        
-        nav {background:#fff; padding:16px 5%; box-shadow:0 1px 3px rgba(0,0,0,0.05); display:flex; justify-content:space-between; align-items:center;}
-        .logo {font-size:24px; font-weight:700; color:#2563eb; text-decoration:none;}
-        .logo span {color:#0f172a;}
-        
-        .container {max-width:1100px; margin:40px auto; padding:0 5%; display:grid; grid-template-columns:1fr 340px; gap:32px;}
-        
-        .main-content {background:#fff; padding:32px; border-radius:12px; border:1px solid #e2e8f0;}
-        .job-header h1 {font-size:28px; font-weight:700; margin-bottom:8px;}
-        .company-name {color:#2563eb; font-weight:600; font-size:18px; margin-bottom:20px;}
-        
-        .highlights {display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; padding:20px; background:#f8fafc; border-radius:12px; margin:24px 0;}
-        .highlight {display:flex; align-items:center; gap:12px;}
-        .highlight i {color:#2563eb; font-size:20px; width:24px;}
-        .highlight div span {display:block; font-size:13px; color:#64748b;}
-        .highlight div strong {font-size:15px; font-weight:600;}
-        
-        .section {margin:32px 0;}
-        .section h3 {font-size:20px; font-weight:600; margin-bottom:16px;}
-        .description {line-height:1.7; color:#334155;}
-        .skills {display:flex; gap:8px; flex-wrap:wrap;}
-        .skill-tag {background:#eff6ff; color:#2563eb; padding:8px 16px; border-radius:8px; font-size:14px; font-weight:500;}
-        
-        .sidebar {position:sticky; top:20px; height:fit-content;}
-        .apply-card {background:#fff; padding:24px; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:20px;}
-        .apply-btn {width:100%; background:#2563eb; color:#fff; border:none; padding:16px; border-radius:8px; font-weight:600; font-size:16px; cursor:pointer; margin-bottom:12px;}
-        .action-btns {display:flex; gap:8px;}
-        .action-btn {flex:1; padding:12px; border:1px solid #e2e8f0; background:#fff; border-radius:8px; cursor:pointer; font-weight:500;}
-        .action-btn:hover {background:#f8fafc;}
-        
-        .company-card {background:#fff; padding:24px; border-radius:12px; border:1px solid #e2e8f0; text-align:center;}
-        .company-logo {width:64px; height:64px; background:#eff6ff; border-radius:12px; margin:0 auto 12px; display:flex; align-items:center; justify-content:center; font-size:28px; color:#2563eb;}
-        
-        @media(max-width:900px){
-            .container {grid-template-columns:1fr;}
-            .sidebar {position:static;}
-        }
-    </style>
-</head>
-<body>
-    <nav>
-        <a href="/" class="logo">Sure<span>Job</span></a>
-        <a href="/company-login" style="background:#2563eb; color:#fff; padding:10px 20px; border-radius:8px; text-decoration:none;">Post a Job</a>
-    </nav>
+{% extends "base.html" %}
 
-    <div class="container">
-        <div class="main-content">
-            <div class="job-header">
-                <h1>{{ job.title }}</h1>
-                <div class="company-name">{{ job.company_name }}</div>
-            </div>
+{% block title %}{{ job.title }} at {{ job.company_name }} - SureJob{% endblock %}
 
-            <div class="highlights">
-                <div class="highlight">
-                    <i class="fa-solid fa-location-dot"></i>
-                    <div><span>Location</span><strong>{{ job.location }}</strong></div>
-                </div>
-                <div class="highlight">
-                    <i class="fa-solid fa-briefcase"></i>
-                    <div><span>Experience</span><strong>{{ job.experience or '0-2 Years' }}</strong></div>
-                </div>
-                <div class="highlight">
-                    <i class="fa-solid fa-money-bill-wave"></i>
-                    <div><span>Salary</span><strong>{{ job.salary }}</strong></div>
-                </div>
-                <div class="highlight">
-                    <i class="fa-solid fa-layer-group"></i>
-                    <div><span>Category</span><strong>{{ job.category }}</strong></div>
-                </div>
-            </div>
+{% block extra_css %}
+<style>
+   .job-container {max-width:1100px; margin:40px auto; padding:0 5%; display:grid; grid-template-columns:1fr 380px; gap:32px;}
+    
+    /* Main Content */
+   .main-content {background:var(--white); padding:40px; border-radius:16px; border:1px solid var(--border);}
+   .job-header {border-bottom:1px solid var(--border); padding-bottom:24px; margin-bottom:32px;}
+   .job-header h1 {font-size:32px; font-weight:800; margin-bottom:12px; line-height:1.3;}
+   .company-row {display:flex; align-items:center; gap:16px; margin-bottom:20px;}
+   .company-logo-small {
+        width:56px; height:56px; border-radius:12px; background:var(--bg);
+        display:flex; align-items:center; justify-content:center; font-size:24px; color:var(--primary);
+    }
+   .company-name {color:var(--primary); font-weight:700; font-size:18px; text-decoration:none;}
+   .company-name:hover {text-decoration:underline;}
+   .posted-date {color:var(--text-light); font-size:14px; display:flex; align-items:center; gap:6px;}
+    
+    /* Highlights Grid */
+   .highlights {
+        display:grid; grid-template-columns:repeat(2, 1fr); gap:20px; 
+        padding:24px; background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); 
+        border-radius:12px; margin-bottom:32px;
+    }
+   .highlight {display:flex; align-items:flex-start; gap:14px;}
+   .highlight i {
+        color:var(--primary); font-size:22px; width:28px; height:28px;
+        background:var(--white); border-radius:8px; display:flex; align-items:center; justify-content:center;
+        flex-shrink:0;
+    }
+   .highlight div span {display:block; font-size:13px; color:var(--text-light); margin-bottom:4px;}
+   .highlight div strong {font-size:16px; font-weight:600; color:var(--text);}
+    
+    /* Sections */
+   .section {margin:40px 0;}
+   .section h3 {font-size:22px; font-weight:700; margin-bottom:16px; display:flex; align-items:center; gap:10px;}
+   .section h3 i {color:var(--primary);}
+   .description {line-height:1.8; color:#334155; font-size:16px; white-space:pre-line;}
+   .skills {display:flex; gap:10px; flex-wrap:wrap;}
+   .skill-tag {
+        background:linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); 
+        color:#1e40af; padding:10px 18px; border-radius:10px; 
+        font-size:14px; font-weight:600; border:1px solid #93c5fd;
+    }
+    
+    /* Sidebar */
+   .sidebar {position:sticky; top:84px; height:fit-content; display:flex; flex-direction:column; gap:20px;}
+   .apply-card {
+        background:linear-gradient(135deg, #2563eb 0%, #1e40af 100%); 
+        padding:28px; border-radius:16px; color:#fff; box-shadow:var(--shadow-lg);
+    }
+   .apply-card h3 {font-size:18px; margin-bottom:16px; opacity:0.95;}
+   .apply-btn {
+        width:100%; background:var(--white); color:var(--primary); border:none; 
+        padding:16px; border-radius:12px; font-weight:700; font-size:16px; 
+        cursor:pointer; transition:all 0.2s; margin-bottom:12px;
+    }
+   .apply-btn:hover {transform:scale(1.02); box-shadow:0 8px 20px rgba(0,0,0,0.2);}
+   .action-btns {display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+   .action-btn {
+        padding:12px; border:2px solid rgba(255,255,255,0.3); background:rgba(255,255,255,0.1); 
+        backdrop-filter:blur(10px); border-radius:10px; cursor:pointer; font-weight:600;
+        color:#fff; transition:all 0.2s; font-size:14px;
+    }
+   .action-btn:hover {background:rgba(255,255,255,0.2); border-color:rgba(255,255,255,0.5);}
+    
+   .company-card {background:var(--white); padding:28px; border-radius:16px; border:1px solid var(--border);}
+   .company-logo-big {
+        width:80px; height:80px; background:linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); 
+        border-radius:16px; margin:0 auto 16px; display:flex; align-items:center; 
+        justify-content:center; font-size:36px; color:var(--primary);
+    }
+   .company-card h3 {text-align:center; margin-bottom:8px; font-size:20px;}
+   .company-card p {text-align:center; color:var(--text-light); font-size:14px; margin-bottom:20px;}
+   .company-stats {display:grid; grid-template-columns:1fr 1fr; gap:16px; padding-top:20px; border-top:1px solid var(--border);}
+   .stat-item {text-align:center;}
+   .stat-item strong {display:block; font-size:20px; color:var(--primary); margin-bottom:4px;}
+   .stat-item span {font-size:12px; color:var(--text-light);}
+    
+    /* Sticky Bottom Bar Mobile */
+   .mobile-apply-bar {
+        display:none; position:fixed; bottom:0; left:0; right:0; 
+        background:var(--white); padding:16px; box-shadow:0 -4px 12px rgba(0,0,0,0.1);
+        z-index:999; border-top:1px solid var(--border);
+    }
+   .mobile-apply-bar.apply-btn {margin:0;}
+    
+    /* Similar Jobs */
+   .similar-jobs {max-width:1100px; margin:60px auto; padding:0 5%;}
+   .similar-grid {display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:20px;}
+   .similar-card {
+        background:var(--white); padding:24px; border-radius:12px; border:1px solid var(--border);
+        transition:all 0.2s; text-decoration:none; color:inherit; display:block;
+    }
+   .similar-card:hover {box-shadow:var(--shadow-lg); transform:translateY(-2px); border-color:var(--primary);}
+   .similar-card h4 {font-size:16px; font-weight:600; margin-bottom:8px; color:var(--text);}
+   .similar-card p {font-size:14px; color:var(--text-light); margin-bottom:12px;}
+   .similar-meta {display:flex; gap:12px; font-size:13px; color:var(--text-light);}
+    
+    /* Apply Form */
+   .apply-form-section {max-width:1100px; margin:60px auto; padding:0 5%;}
+   .form-card {background:var(--white); padding:40px; border-radius:16px; border:1px solid var(--border);}
+   .form-card h3 {font-size:24px; margin-bottom:24px;}
+   .form-grid {display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;}
+   .form-input {
+        width:100%; padding:14px 16px; border:2px solid var(--border); 
+        border-radius:10px; font-size:15px; transition:all 0.2s; outline:none;
+    }
+   .form-input:focus {border-color:var(--primary); box-shadow:0 0 0 3px rgba(37,99,235,0.1);}
+   .form-textarea {width:100%; padding:14px 16px; border:2px solid var(--border); border-radius:10px; font-size:15px; min-height:120px; resize:vertical;}
+   .file-upload {
+        border:2px dashed var(--border); border-radius:10px; padding:24px; text-align:center;
+        cursor:pointer; transition:all 0.2s; background:var(--bg);
+    }
+   .file-upload:hover {border-color:var(--primary); background:#eff6ff;}
+   .file-upload i {font-size:32px; color:var(--primary); margin-bottom:12px;}
+    
+    @media(max-width:900px){
+       .job-container {grid-template-columns:1fr;}
+       .sidebar {position:static; order:-1;}
+       .mobile-apply-bar {display:block;}
+        body {padding-bottom:80px;}
+       .highlights {grid-template-columns:1fr;}
+       .form-grid {grid-template-columns:1fr;}
+       .main-content {padding:24px;}
+    }
+</style>
+{% endblock %}
 
-            <div class="section">
-                <h3>Job Description</h3>
-                <div class="description">{{ job.description or 'No description provided.' }}</div>
-            </div>
-
-            {% if job.skills %}
-            <div class="section">
-                <h3>Key Skills</h3>
-                <div class="skills">
-                    {% for skill in job.skills.split(',') %}
-                    <span class="skill-tag">{{ skill.strip() }}</span>
-                    {% endfor %}
+{% block content %}
+<div class="job-container">
+    <div class="main-content">
+        <div class="job-header">
+            <h1>{{ job.title }}</h1>
+            <div class="company-row">
+                <div class="company-logo-small">
+                    {% if job.logo %}
+                    <img src="/{{ job.logo }}" alt="{{ job.company_name }}" style="width:100%; height:100%; object-fit:cover; border-radius:12px;">
+                    {% else %}
+                    <i class="fas fa-building"></i>
+                    {% endif %}
+                </div>
+                <div>
+                    <a href="#" class="company-name">{{ job.company_name }}</a>
+                    <div class="posted-date">
+                        <i class="far fa-clock"></i> Posted on {{ job.posted_on or 'Recently' }}
+                        <span style="margin:0 8px;">•</span>
+                        <i class="far fa-eye"></i> {{ job.views or 0 }} views
+                    </div>
                 </div>
             </div>
-            {% endif %}
         </div>
 
-        <div class="sidebar">
-            <div class="apply-card">
-                <button class="apply-btn" onclick="document.getElementById('applyForm').scrollIntoView({behavior:'smooth'})">
-                    <i class="fa fa-paper-plane"></i> Apply Now
+        <div class="highlights">
+            <div class="highlight">
+                <i class="fas fa-map-marker-alt"></i>
+                <div><span>Location</span><strong>{{ job.location or 'Not Specified' }}</strong></div>
+            </div>
+            <div class="highlight">
+                <i class="fas fa-briefcase"></i>
+                <div><span>Experience</span><strong>{{ job.experience or 'Any' }}</strong></div>
+            </div>
+            <div class="highlight">
+                <i class="fas fa-money-bill-wave"></i>
+                <div><span>Salary</span><strong>{{ job.salary or 'Not Disclosed' }}</strong></div>
+            </div>
+            <div class="highlight">
+                <i class="fas fa-layer-group"></i>
+                <div><span>Category</span><strong>{{ job.category }}</strong></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3><i class="fas fa-file-alt"></i> Job Description</h3>
+            <div class="description">{{ job.description or 'No description provided. Please contact the company for more details.' }}</div>
+        </div>
+
+        {% if job.skills %}
+        <div class="section">
+            <h3><i class="fas fa-tags"></i> Key Skills Required</h3>
+            <div class="skills">
+                {% for skill in job.skills.split(',') %}
+                <span class="skill-tag">{{ skill.strip() }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if job.contact %}
+        <div class="section">
+            <h3><i class="fas fa-phone"></i> Contact Information</h3>
+            <div class="description">{{ job.contact }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="sidebar">
+        <div class="apply-card">
+            <h3><i class="fas fa-rocket"></i> Quick Apply</h3>
+            <button class="apply-btn" onclick="document.getElementById('applyForm').scrollIntoView({behavior:'smooth', block:'start'})">
+                <i class="fas fa-paper-plane"></i> Apply Now
+            </button>
+            <div class="action-btns">
+                <button class="action-btn" id="saveBtn" onclick="saveJob({{ job.id }})">
+                    <i class="far fa-bookmark"></i> Save
                 </button>
-                <div class="action-btns">
-                    <button class="action-btn" onclick="alert('Job Saved!')"><i class="far fa-bookmark"></i> Save</button>
-                    <button class="action-btn" onclick="window.open('https://wa.me/?text=Check this job: {{ job.title }} at {{ job.company_name }} - {{ request.url }}')"><i class="fab fa-whatsapp"></i> Share</button>
+                <button class="action-btn" onclick="shareWhatsApp()">
+                    <i class="fab fa-whatsapp"></i> Share
+                </button>
+            </div>
+        </div>
+
+        <div class="company-card">
+            <div class="company-logo-big">
+                {% if job.logo %}
+                <img src="/{{ job.logo }}" alt="{{ job.company_name }}" style="width:100%; height:100%; object-fit:cover; border-radius:16px;">
+                {% else %}
+                <i class="fas fa-building"></i>
+                {% endif %}
+            </div>
+            <h3>{{ job.company_name }}</h3>
+            <p>Leading company in {{ job.category }}</p>
+            <div class="company-stats">
+                <div class="stat-item">
+                    <strong>{{ job.views or 0 }}</strong>
+                    <span>Job Views</span>
+                </div>
+                <div class="stat-item">
+                    <strong>4.5★</strong>
+                    <span>Rating</span>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
 
-            <div class="company-card">
-                <div class="company-logo"><i class="fa fa-building"></i></div>
-                <h3 style="margin-bottom:8px;">{{ job.company_name }}</h3>
-                <p style="color:#64748b; font-size:14px;">Leading company hiring for multiple roles</p>
+<!-- Apply Form -->
+<div id="applyForm" class="apply-form-section">
+    <div class="form-card">
+        <h3><i class="fas fa-paper-plane" style="color:var(--primary);"></i> Apply for {{ job.title }}</h3>
+        <form method="POST" enctype="multipart/form-data">
+            <div class="form-grid">
+                <input type="text" name="name" class="form-input" placeholder="Full Name *" required>
+                <input type="email" name="email" class="form-input" placeholder="Email Address *" required>
             </div>
-        </div>
+            <div class="form-grid">
+                <input type="tel" name="phone" class="form-input" placeholder="Phone Number *" required>
+                <input type="text" name="experience" class="form-input" placeholder="Total Experience (e.g. 2 Years)">
+            </div>
+            <textarea name="cover_letter" class="form-textarea" placeholder="Cover Letter / Why should we hire you?" style="margin-bottom:16px;"></textarea>
+            
+            <label class="file-upload">
+                <input type="file" name="resume" accept=".pdf,.doc,.docx" style="display:none;" onchange="document.getElementById('fileName').textContent = this.files[0].name">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <div style="font-weight:600; margin-bottom:4px;">Upload Resume</div>
+                <div id="fileName" style="font-size:14px; color:var(--text-light);">PDF, DOC, DOCX (Max 5MB)</div>
+            </label>
+            
+            <button type="submit" class="apply-btn" style="margin-top:20px;">
+                <i class="fas fa-check-circle"></i> Submit Application
+            </button>
+        </form>
     </div>
+</div>
 
-    <!-- Apply Form - Ye neeche add kar dena -->
-    <div id="applyForm" style="max-width:1100px; margin:0 auto 60px; padding:0 5%;">
-        <div style="background:#fff; padding:32px; border-radius:12px; border:1px solid #e2e8f0;">
-            <h3 style="margin-bottom:20px;">Apply for {{ job.title }}</h3>
-            <form method="POST" enctype="multipart/form-data">
-                <input type="text" name="name" placeholder="Full Name" required style="width:100%; padding:12px; margin-bottom:12px; border:1px solid #e2e8f0; border-radius:8px;">
-                <input type="email" name="email" placeholder="Email" required style="width:100%; padding:12px; margin-bottom:12px; border:1px solid #e2e8f0; border-radius:8px;">
-                <input type="tel" name="phone" placeholder="Phone" required style="width:100%; padding:12px; margin-bottom:12px; border:1px solid #e2e8f0; border-radius:8px;">
-                <input type="file" name="resume" accept=".pdf,.doc,.docx" style="width:100%; padding:12px; margin-bottom:12px; border:1px solid #e2e8f0; border-radius:8px;">
-                <button type="submit" style="width:100%; background:#2563eb; color:#fff; border:none; padding:14px; border-radius:8px; font-weight:600;">Submit Application</button>
-            </form>
-        </div>
+<!-- Similar Jobs -->
+{% if similar_jobs %}
+<div class="similar-jobs">
+    <h2 class="section-title" style="text-align:left;">Similar Jobs</h2>
+    <div class="similar-grid">
+        {% for sjob in similar_jobs %}
+        <a href="/job/{{ sjob.id }}" class="similar-card">
+            <h4>{{ sjob.title }}</h4>
+            <p>{{ sjob.company_name or 'Top Company' }}</p>
+            <div class="similar-meta">
+                <span><i class="fas fa-map-marker-alt"></i> {{ sjob.location }}</span>
+            </div>
+        </a>
+        {% endfor %}
     </div>
-</body>
-                </html>
+</div>
+{% endif %}
+
+<!-- Mobile Sticky Apply Bar -->
+<div class="mobile-apply-bar">
+    <button class="apply-btn" onclick="document.getElementById('applyForm').scrollIntoView({behavior:'smooth'})">
+        <i class="fas fa-paper-plane"></i> Apply Now
+    </button>
+</div>
+
+<script>
+function saveJob(jobId) {
+    const email = prompt('Enter your email to save this job:');
+    if (!email ||!email.includes('@')) {
+        alert('Please enter a valid email');
+        return;
+    }
+    
+    fetch(`/save-job/${jobId}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email: email})
+    })
+   .then(r => r.json())
+   .then(data => {
+        if (data.success) {
+            document.getElementById('saveBtn').innerHTML = '<i class="fas fa-bookmark"></i> Saved';
+            alert('✓ Job saved successfully!');
+        } else {
+            alert(data.msg || 'Already saved');
+        }
+    });
+}
+
+function shareWhatsApp() {
+    const text = `Check this job: *{{ job.title }}* at {{ job.company_name }}\n\nLocation: {{ job.location }}\nSalary: {{ job.salary }}\n\nApply here: ${window.location.href}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+}
+</script>
+{% endblock %}
