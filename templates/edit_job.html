@@ -1,69 +1,29 @@
 {% extends "base.html" %}
-{% block content %}
-<div class="container mt-4">
-    <h3><i class="fas fa-edit"></i> Edit Job</h3>
-    
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        {% for message in messages %}
-          <div class="alert alert-danger">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-    
-    <form method="POST">
-        <div class="mb-3">
-            <label>Job Title</label>
-            <input type="text" name="title" class="form-control" value="{{ job.title }}" required>
-        </div>
-        
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label>Location</label>
-                <select name="location" class="form-control" required>
-                    {% for loc in locations %}
-                    <option value="{{ loc }}" {% if job.location == loc %}selected{% endif %}>{{ loc }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label>Category</label>
-                <select name="category" class="form-control" required>
-                    {% for cat in categories %}
-                    <option value="{{ cat }}" {% if job.category == cat %}selected{% endif %}>{{ cat }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-        
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label>Salary</label>
-                <input type="text" name="salary" class="form-control" value="{{ job.salary }}" required>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label>Experience</label>
-                <input type="text" name="experience" class="form-control" value="{{ job.experience }}">
-            </div>
-        </div>
-        
-        <div class="mb-3">
-            <label>Skills</label>
-            <input type="text" name="skills" class="form-control" value="{{ job.skills }}">
-        </div>
-        
-        <div class="mb-3">
-            <label>Contact</label>
-            <input type="text" name="contact" class="form-control" value="{{ job.contact }}">
-        </div>
-        
-        <div class="mb-3">
-            <label>Description</label>
-            <textarea name="description" class="form-control" rows="5">{{ job.description }}</textarea>
-        </div>
-        
-        <button type="submit" class="btn btn-success">Update Job</button>
-        <a href="/company-dashboard" class="btn btn-secondary">Cancel</a>
-    </form>
-</div>
-{% endblock %}
+
+{% block title %}Edit Job - SureJob{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {max-width:800px; margin:40px auto; padding:0 5%;}
+    .form-card {
+        background:var(--white); padding:40px; border-radius:16px; 
+        border:1px solid var(--border); box-shadow:var(--shadow);
+    }
+    .form-card h2 {font-size:28px; font-weight:700; margin-bottom:8px;}
+    .form-card p {color:var(--text-light); margin-bottom:32px;}
+    .form-group {margin-bottom:20px;}
+    .form-label {display:block; font-weight:600; margin-bottom:8px; font-size:14px;}
+    .form-input {
+        width:100%; padding:14px 16px; border:2px solid var(--border); 
+        border-radius:10px; font-size:15px; transition:all 0.2s; outline:none;
+    }
+    .form-input:focus {border-color:var(--primary); box-shadow:0 0 0 3px rgba(37,99,235,0.1);}
+    .form-row {display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+    .btn-submit {
+        width:100%; background:var(--primary); color:#fff; border:none; 
+        padding:16px; border-radius:10px; font-weight:700; font-size:16px; 
+        cursor:pointer; transition:all 0.2s;
+    }
+    .btn-submit:hover {background:var(--primary-dark); transform:translateY(-2px);}
+    .btn-danger {
+        width:100%; background:var(--danger); color:#fff; border:none; 
