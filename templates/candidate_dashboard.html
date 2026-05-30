@@ -1,44 +1,39 @@
 {% extends "base.html" %}
+{% block title %}Dashboard - SureJob{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <h3><i class="fas fa-tachometer-alt"></i> Welcome, {{ session['candidate_name'] }}</h3>
-    <hr>
-    <h5 class="mb-3">My Applications</h5>
-    {% if applications %}
-    <table class="table table-bordered">
-        <thead class="table-dark">
-            <tr>
-                <th>Job Title</th>
-                <th>Company</th>
-                <th>Location</th>
-                <th>Status</th>
-                <th>Applied On</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for app in applications %}
-            <tr>
-                <td>{{ app.title }}</td>
-                <td>{{ app.company_name }}</td>
-                <td>{{ app.location }}</td>
-                <td>
-                    {% if app.status == 'New' %}
-                        <span class="badge bg-primary">Applied</span>
-                    {% elif app.status == 'Shortlisted' %}
-                        <span class="badge bg-success">Shortlisted</span>
-                    {% elif app.status == 'Interview' %}
-                        <span class="badge bg-warning text-dark">Interview</span>
-                    {% elif app.status == 'Rejected' %}
-                        <span class="badge bg-danger">Rejected</span>
-                    {% endif %}
-                </td>
-                <td>{{ app.applied_on }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div class="alert alert-info">You haven't applied to any jobs yet. <a href="/">Browse Jobs</a></div>
-    {% endif %}
+<div class="container my-5">
+    <h2 class="mb-4">Welcome, {{ session.get('name') }}</h2>
+    
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Your Profile</h5>
+            <p class="mb-1"><strong>Email:</strong> {{ session.get('email') }}</p>
+            <p class="mb-0"><strong>Phone:</strong> {{ session.get('phone') }}</p>
+        </div>
+    </div>
+
+    <h4 class="mb-3">Your Job Applications</h4>
+    <div class="row">
+        {% for app in applications %}
+        <div class="col-md-6 mb-3">
+            <div class="card job-card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ app['job_title'] }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ app['company_name'] }}</h6>
+                    <p class="mb-1"><i class="bi bi-geo-alt"></i> {{ app['location'] }}</p>
+                    <span class="badge bg-{{ 'success' if app['status'] == 'Accepted' else 'warning' if app['status'] == 'Pending' else 'danger' }}">
+                        {{ app['status'] }}
+                    </span>
+                    <p class="text-muted small mt-2 mb-0">Applied on: {{ app['applied_date'] }}</p>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info">You haven't applied to any jobs yet. <a href="/jobs">Browse Jobs</a></div>
+        </div>
+        {% endfor %}
+    </div>
 </div>
 {% endblock %}
