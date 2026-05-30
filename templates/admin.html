@@ -54,4 +54,196 @@
     }
     .tab {
         padding:14px 24px; background:none; border:none; font-weight:600;
-        cursor:pointer; color:var(--text-light); border-bottom:3px solid
+        cursor:pointer; color:var(--text-light); border-bottom:3px solid transparent;
+    }
+    .tab.active {color:var(--primary); border-bottom-color:var(--primary);}
+    
+    .table-card {
+        background:var(--white); border-radius:16px; border:1px solid var(--border);
+        overflow:hidden; margin-bottom:24px;
+    }
+    .table-header {padding:24px; border-bottom:1px solid var(--border);}
+    .table-header h3 {font-size:18px; font-weight:700;}
+    
+    .admin-table {width:100%; border-collapse:collapse;}
+    .admin-table th {
+        background:var(--bg-light); padding:16px; text-align:left;
+        font-weight:600; font-size:13px; color:var(--text-light);
+    }
+    .admin-table td {padding:16px; border-bottom:1px solid var(--border);}
+    .admin-table tr:hover {background:var(--bg-light);}
+    
+    .badge {
+        padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600;
+    }
+    .badge.active {background:#dcfce7; color:#15803d;}
+    .badge.featured {background:#fef3c7; color:#d97706;}
+    
+    .btn-sm {
+        padding:8px 16px; font-size:13px; border-radius:8px;
+        border:none; cursor:pointer; font-weight:600; text-decoration:none;
+    }
+    .btn-feature {background:#fef3c7; color:#d97706;}
+    .btn-unfeature {background:#f3f4f6; color:var(--text);}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <div>
+            <h1>Admin Dashboard</h1>
+            <p>Manage SureJob v3.0 - {{ companies|length }} Companies, {{ jobs|length }} Jobs</p>
+        </div>
+        <a href="/logout" class="btn btn-secondary">Logout</a>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card blue">
+            <div class="stat-icon">🏢</div>
+            <div class="stat-value">{{ companies|length }}</div>
+            <div class="stat-label">Total Companies</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-icon">💼</div>
+            <div class="stat-value">{{ jobs|length }}</div>
+            <div class="stat-label">Active Jobs</div>
+        </div>
+        <div class="stat-card orange">
+            <div class="stat-icon">📊</div>
+            <div class="stat-value">{{ apps_count }}</div>
+            <div class="stat-label">Total Applications</div>
+        </div>
+        <div class="stat-card red">
+            <div class="stat-icon">⭐</div>
+            <div class="stat-value">{{ jobs|selectattr('featured')|list|length }}</div>
+            <div class="stat-label">Featured Jobs</div>
+        </div>
+    </div>
+
+    <div class="chart-card">
+        <h3>📈 Job Categories Distribution</h3>
+        <canvas id="categoryChart" height="80"></canvas>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('companies')">Companies</button>
+        <button class="tab" onclick="showTab('jobs')">Jobs</button>
+    </div>
+
+    <div id="companies-tab" class="table-card">
+        <div class="table-header">
+            <h3>Registered Companies</h3>
+        </div>
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Company</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>GST</th>
+                    <th>Status</th>
+                    <th>Registered</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in companies %}
+                <tr>
+                    <td><strong>{{ c.company_name }}</strong></td>
+                    <td>{{ c.email }}</td>
+                    <td>{{ c.phone }}</td>
+                    <td>{{ c.gst_no or '-' }}</td>
+                    <td><span class="badge active">{{ c.status }}</span></td>
+                    <td>{{ c.registered_on }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" style="text-align:center; padding:40px;">No companies yet</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div id="jobs-tab" class="table-card" style="display:none;">
+        <div class="table-header">
+            <h3>All Jobs</h3>
+        </div>
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Job Title</th>
+                    <th>Company</th>
+                    <th>Category</th>
+                    <th>Location</th>
+                    <th>Views</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in jobs %}
+                <tr>
+                    <td><strong>{{ job.title }}</strong></td>
+                    <td>{{ job.company_name }}</td>
+                    <td>{{ job.category }}</td>
+                    <td>{{ job.location }}</td>
+                    <td>{{ job.views }}</td>
+                    <td>
+                        {% if job.featured %}
+                            <span class="badge featured">Featured</span>
+                        {% else %}
+                            <span class="badge active">Active</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="/toggle-featured/{{ job.id }}" class="btn-sm {% if job.featured %}btn-unfeature{% else %}btn-feature{% endif %}">
+                            {% if job.featured %}Unfeature{% else %}Feature{% endif %}
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" style="text-align:center; padding:40px;">No jobs posted yet</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+function showTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('[id$="-tab"]').forEach(t => t.style.display = 'none');
+    event.target.classList.add('active');
+    document.getElementById(tab + '-tab').style.display = 'block';
+}
+
+// Chart data
+const jobs = {{ jobs|tojson }};
+const categories = {};
+jobs.forEach(job => {
+    categories[job.category] = (categories[job.category] || 0) + 1;
+});
+
+if (Object.keys(categories).length > 0) {
+    new Chart(document.getElementById('categoryChart'), {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(categories),
+            datasets: [{
+                data: Object.values(categories),
+                backgroundColor: [
+                    '#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+                    '#06b6d4', '#f97316', '#84cc16', '#ec4899'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {position: 'bottom'}
+            }
+        }
+    });
+}
+</script>
+{% endblock %}
