@@ -4,133 +4,68 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}SureJob{% endblock %}</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
-        * {margin:0; padding:0; box-sizing:border-box;}
-        :root {
-            --primary:#2563eb; --primary-dark:#1e40af; --secondary:#0f172a;
-            --success:#10b981; --danger:#ef4444; --warning:#f59e0b;
-            --text:#1e293b; --text-light:#64748b; --border:#e2e8f0;
-            --bg:#f8fafc; --white:#fff;
-            --shadow:0 1px 3px rgba(0,0,0,0.1); --shadow-lg:0 10px 15px -3px rgba(0,0,0,0.1);
-        }
-        body {font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); line-height:1.6;}
-        
-        /* Header */
-        .header {background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:1000; box-shadow:var(--shadow);}
-        .nav {max-width:1400px; margin:0 auto; padding:0 5%; display:flex; justify-content:space-between; align-items:center; height:68px;}
-        .logo {font-size:28px; font-weight:800; color:var(--primary); text-decoration:none; display:flex; align-items:center; gap:8px;}
-        .logo i {font-size:24px;}
-        .nav-links {display:flex; gap:32px; align-items:center;}
-        .nav-links a {color:var(--text); text-decoration:none; font-weight:500; font-size:15px; transition:color 0.2s;}
-        .nav-links a:hover {color:var(--primary);}
-        .nav-buttons {display:flex; gap:12px; align-items:center;}
-        .btn {padding:10px 24px; border-radius:8px; font-weight:600; font-size:14px; cursor:pointer; transition:all 0.2s; text-decoration:none; display:inline-flex; align-items:center; gap:8px; border:none;}
-        .btn-primary {background:var(--primary); color:var(--white);}
-        .btn-primary:hover {background:var(--primary-dark); transform:translateY(-1px);}
-        .btn-outline {background:transparent; color:var(--primary); border:1.5px solid var(--primary);}
-        .btn-outline:hover {background:var(--primary); color:var(--white);}
-        
-        /* Mobile Menu */
-        .mobile-toggle {display:none; background:none; border:none; font-size:24px; cursor:pointer; color:var(--text);}
-        
-        /* Main */
-        .main {min-height:calc(100vh - 68px - 200px);}
-        
-        /* Footer */
-        .footer {background:var(--secondary); color:#94a3b8; padding:48px 5% 24px; margin-top:80px;}
-        .footer-content {max-width:1400px; margin:0 auto; display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:48px; margin-bottom:32px;}
-        .footer h4 {color:var(--white); margin-bottom:16px; font-size:16px;}
-        .footer a {color:#94a3b8; text-decoration:none; display:block; margin-bottom:12px; font-size:14px; transition:color 0.2s;}
-        .footer a:hover {color:var(--white);}
-        .footer-bottom {border-top:1px solid #334155; padding-top:24px; text-align:center; font-size:14px;}
-        
-        /* Utilities */
-        .container {max-width:1400px; margin:0 auto; padding:0 5%;}
-        .badge {padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; display:inline-block;}
-        .badge-blue {background:#dbeafe; color:#1e40af;}
-        .badge-green {background:#dcfce7; color:#166534;}
-        .badge-orange {background:#fed7aa; color:#9a3412;}
-        .alert {padding:12px 16px; border-radius:8px; margin-bottom:20px;}
-        .alert-success {background:#dcfce7; color:#166534;}
-        .alert-danger {background:#fee2e2; color:#991b1b;}
-        
-        @media(max-width:768px){
-            .nav-links {display:none;}
-            .mobile-toggle {display:block;}
-            .footer-content {grid-template-columns:1fr; gap:32px;}
-        }
+        .navbar-brand { font-weight: 700; font-size: 1.5rem; }
+        .btn-primary { background: #2563eb; border: none; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .job-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(-2px); transition: 0.3s; }
+        .footer { background: #1e293b; color: white; }
     </style>
-    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <header class="header">
-        <nav class="nav">
-            <a href="/" class="logo"><i class="fas fa-briefcase"></i>SureJob</a>
-            <div class="nav-links">
-                <a href="/">Jobs</a>
-                <a href="/companies">Companies</a>
-                {% if session.get('company_id') %}
-                    <a href="/company-dashboard">Dashboard</a>
-                {% elif session.get('candidate_id') %}
-                    <a href="/profile">Profile</a>
-                    <a href="/saved-jobs">Saved Jobs</a>
-                {% endif %}
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand text-primary" href="/">SureJob</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/jobs">Jobs</a></li>
+                </ul>
+                <ul class="navbar-nav">
+                    {% if session.get('user_type') == 'candidate' %}
+                        <li class="nav-item"><a class="nav-link" href="/candidate-dashboard">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+                    {% elif session.get('user_type') == 'company' %}
+                        <li class="nav-item"><a class="nav-link" href="/company-dashboard">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/post-job">Post Job</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/company-logout">Logout</a></li>
+                    {% else %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Login</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/candidate-login">Candidate Login</a></li>
+                                <li><a class="dropdown-item" href="/company-login">Company Login</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Register</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/candidate-register">As Candidate</a></li>
+                                <li><a class="dropdown-item" href="/company-register">As Company</a></li>
+                            </ul>
+                        </li>
+                    {% endif %}
+                </ul>
             </div>
-            <div class="nav-buttons">
-                {% if session.get('company_id') %}
-                    <a href="/post-job" class="btn btn-primary"><i class="fas fa-plus"></i>Post Job</a>
-                    <a href="/logout" class="btn btn-outline">Logout</a>
-                {% elif session.get('candidate_id') %}
-                    <a href="/logout" class="btn btn-outline">Logout</a>
-                {% else %}
-                    <a href="/candidate-login" class="btn btn-outline">Login</a>
-                    <a href="/company-register" class="btn btn-primary">For Employers</a>
-                {% endif %}
-            </div>
-            <button class="mobile-toggle"><i class="fas fa-bars"></i></button>
-        </nav>
-    </header>
-    
-    <main class="main">
+        </div>
+    </nav>
+
+    <main class="py-4">
         {% block content %}{% endblock %}
     </main>
-    
-    <footer class="footer">
-        <div class="footer-content">
-            <div>
-                <h4><i class="fas fa-briefcase"></i> SureJob</h4>
-                <p style="margin-bottom:16px;">India's trusted job portal connecting talent with opportunity.</p>
-                <div style="display:flex; gap:12px;">
-                    <a href="#" style="margin:0;"><i class="fab fa-facebook"></i></a>
-                    <a href="#" style="margin:0;"><i class="fab fa-twitter"></i></a>
-                    <a href="#" style="margin:0;"><i class="fab fa-linkedin"></i></a>
-                </div>
-            </div>
-            <div>
-                <h4>For Job Seekers</h4>
-                <a href="/">Browse Jobs</a>
-                <a href="/candidate-register">Create Account</a>
-                <a href="/profile">My Profile</a>
-            </div>
-            <div>
-                <h4>For Employers</h4>
-                <a href="/company-register">Post a Job</a>
-                <a href="/company-login">Company Login</a>
-                <a href="/company-dashboard">Dashboard</a>
-            </div>
-            <div>
-                <h4>Company</h4>
-                <a href="#">About Us</a>
-                <a href="#">Contact</a>
-                <a href="#">Privacy Policy</a>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2026 SureJob. All rights reserved.</p>
+
+    <footer class="footer mt-5 py-4">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2026 SureJob. All rights reserved.</p>
         </div>
     </footer>
-    
-    {% block extra_js %}{% endblock %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>
