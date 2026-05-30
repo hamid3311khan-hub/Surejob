@@ -120,7 +120,7 @@ def job_detail(job_id):
     conn.close()
     if not job:
         return "Job not found", 404
-    return render_template('job-detail.html', job=job)
+    return render_template('job_detail.html', job=job)
 
 # ==================== CANDIDATE ROUTES ====================
 @app.route('/candidate-register', methods=['GET', 'POST'])
