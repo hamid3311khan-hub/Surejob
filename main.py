@@ -299,14 +299,14 @@ def post_job():
         c.execute('''INSERT INTO jobs (company_id, title, job_type, experience, location, openings,
                      salary, description, requirements, skills, perks, status)
                     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''',
-                 (company_id, data['title'], data['job_type'], data['experience'],
-                  data['location'], data['openings'], salary, data['description'],
-                  data['requirements'], data.get('skills'), data.get('perks'), 'Active'))
+                 (company_id, data.get('title'), data.get('job_type'), data.get('experience'),
+                  data.get('location'), data.get('openings'), salary, data.get('description'),
+                  data.get('requirements'), data.get('skills'), data.get('perks'), 'Active'))
         conn.commit()
         conn.close()
         return redirect('/company-dashboard')
     return render_template('post_job.html')
-
+    
 @app.route('/edit-job/<int:job_id>', methods=['GET', 'POST'])
 def edit_job(job_id):
     if 'company_id' not in session:
