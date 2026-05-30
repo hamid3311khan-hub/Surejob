@@ -1,4 +1,147 @@
-        @app.route('/job/<int:job_id>', methods=['GET', 'POST'])
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory, jsonify
+import sqlite3
+from datetime import datetime, timedelta
+import os
+from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
+
+app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", 'surejob_v3_2026_secure_key_change_this')
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
+
+UPLOAD_FOLDER = 'static/logos'
+RESUME_FOLDER = 'static/resumes'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(RESUME_FOLDER, exist_ok=True)
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'doc', 'docx'}
+JOB_CATEGORIES = ['IT Software', 'Sales & Marketing', 'BPO / Telecaller', 'Accounts & Finance', 'HR & Admin', 'Engineering', 'Customer Support', 'Operations', 'Other']
+LOCATIONS = ['Mumbai', 'Delhi', 'Bangalore', 'Pune', 'Hyderabad', 'Chennai', 'Kolkata', 'Noida', 'Gurgaon', 'Ahmedabad', 'Remote']
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def get_db():
+    conn = sqlite3.connect('surejob.db')
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    conn = get_db()
+    conn.execute("""CREATE TABLE IF NOT EXISTS companies (
+        id INTEGER PRIMARY KEY,
+        company_name TEXT,
+        gst_no TEXT,
+        email TEXT UNIQUE,
+        phone TEXT,
+        password TEXT,
+        logo TEXT,
+        registered_on TEXT,
+        plan_expiry TEXT,
+        status TEXT DEFAULT 'Active')""")
+
+    conn.execute("""CREATE TABLE IF NOT EXISTS jobs (
+        id INTEGER PRIMARY KEY,
+        company_id INTEGER,
+        title TEXT,
+        location TEXT,
+        salary TEXT,
+        experience TEXT,
+        category TEXT,
+        description TEXT,
+        skills TEXT,
+        contact TEXT,
+        posted_on TEXT,
+        views INTEGER DEFAULT 0,
+        featured INTEGER DEFAULT 0,
+        status TEXT DEFAULT 'Active')""")
+
+    conn.execute("""CREATE TABLE IF NOT EXISTS applications (
+        id INTEGER PRIMARY KEY,
+        job_id INTEGER,
+        name TEXT,
+        email TEXT,
+        phone TEXT,
+        resume TEXT,
+        cover_letter TEXT,
+        applied_on TEXT,
+        status TEXT DEFAULT 'New')""")
+
+    conn.execute("""CREATE TABLE IF NOT EXISTS saved_jobs (
+        id INTEGER PRIMARY KEY,
+        email TEXT,
+        job_id INTEGER,
+        saved_on TEXT,
+        UNIQUE(email, job_id))""")
+
+    conn.commit()
+    conn.close()
+
+init_db()
+
+@app.route('/')
+def home():
+    try:
+        conn = get_db()
+        search = request.args.get('q', '').strip()
+        location = request.args.get('location', 'All Locations')
+        category = request.args.get('category', 'All Categories')
+        experience = request.args.get('exp', '')
+        remote = request.args.get('remote', '')
+
+        query = '''
+            SELECT j.id, j.title, j.description, j.salary, j.location, j.category, j.skills, j.experience, j.posted_on, j.featured,
+                   c.company_name, c.logo
+            FROM jobs j
+            LEFT JOIN companies c ON j.company_id = c.id
+            WHERE j.status = 'Active'
+        '''
+        params = []
+
+        if search:
+            query += ''' AND (j.title LIKE? OR j.description LIKE? OR j.skills LIKE? OR c.company_name LIKE?)'''
+            like_search = f'%{search}%'
+            params.extend([like_search, like_search, like_search, like_search])
+
+        if location and location!= 'All Locations':
+            query += ' AND j.location =?'
+            params.append(location)
+
+        if remote == '1':
+            query += ' AND j.location =?'
+            params.append('Remote')
+
+        if category and category!= 'All Categories':
+            query += ' AND j.category =?'
+            params.append(category)
+
+        if experience:
+            query += ' AND j.experience LIKE?'
+            params.append(f'%{experience}%')
+
+        query += ' ORDER BY j.featured DESC, j.id DESC LIMIT 50'
+        jobs = conn.execute(query, params).fetchall()
+
+        top_companies = conn.execute('''
+            SELECT c.company_name, c.logo, COUNT(j.id) as job_count
+            FROM companies c
+            JOIN jobs j ON c.id = j.company_id
+            WHERE j.status='Active'
+            GROUP BY c.id
+            ORDER BY job_count DESC LIMIT 8
+        ''').fetchall()
+
+        conn.close()
+        return render_template('index.html',
+            jobs=jobs, locations=LOCATIONS, categories=JOB_CATEGORIES,
+            search=search, location=location, category=category,
+            experience=experience, remote=remote, top_companies=top_companies)
+    except Exception as e:
+        print(f"Homepage Error: {e}")
+        return f"Error: {e}", 500
+
+@app.route('/job/<int:job_id>', methods=['GET', 'POST'])
 def job_detail(job_id):
     conn = get_db()
     conn.execute('UPDATE jobs SET views = views + 1 WHERE id=?', (job_id,))
@@ -228,29 +371,24 @@ def job_applications(job_id):
     return render_template('job_applications.html', job=job, applications=applications)
 
 @app.route('/admin', methods=['GET', 'POST'])
-
-@app.route('/admin', methods=['GET', 'POST'])
 def admin():
     if request.method == 'POST':
-        if request.form.get('password') == os.environ.get('ADMIN_PASSWORD', 'admin123'):
+        if request.form.get('password') == ADMIN_PASSWORD:
             session['admin'] = True
         else:
             return render_template('admin_login.html', error='Invalid password')
-    
+
     if not session.get('admin'):
         return render_template('admin_login.html')
-    
+
     conn = get_db()
     companies = conn.execute('SELECT * FROM companies ORDER BY id DESC').fetchall()
     jobs = conn.execute('SELECT jobs.*, companies.company_name FROM jobs JOIN companies ON jobs.company_id = companies.id ORDER BY jobs.id DESC').fetchall()
-    
-    # YEH LINE ADD KAR 👇
     apps_count = conn.execute('SELECT COUNT(*) as count FROM applications').fetchone()['count']
-    
     conn.close()
-    
-    # YAHAN apps_count ADD KAR 👇
+
     return render_template('admin.html', companies=companies, jobs=jobs, apps_count=apps_count)
+
 @app.route('/toggle-featured/<int:job_id>')
 def toggle_featured(job_id):
     if not session.get('admin'):
