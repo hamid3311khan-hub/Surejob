@@ -1,224 +1,52 @@
 {% extends "base.html" %}
-
-{% block title %}Applications for {{ job.title }} - SureJob{% endblock %}
-
-{% block extra_css %}
-<style>
-   .container {max-width:1400px; margin:40px auto; padding:0 5%;}
-   .page-header {margin-bottom:32px;}
-   .page-header h2 {font-size:32px; font-weight:800; margin-bottom:8px;}
-   .page-header p {color:var(--text-light); font-size:16px;}
-   .job-info-bar {
-        background:var(--white); padding:24px; border-radius:12px;
-        border:1px solid var(--border); margin-bottom:24px;
-        display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;
-    }
-   .job-info-bar h3 {font-size:20px; margin-bottom:4px;}
-   .job-info-bar p {color:var(--text-light); font-size:14px;}
-   .stats-row {display:flex; gap:24px;}
-   .stat-box {text-align:center;}
-   .stat-box strong {display:block; font-size:24px; font-weight:800; color:var(--primary);}
-   .stat-box span {font-size:13px; color:var(--text-light);}
-
-   .applications-table {
-        background:var(--white); border-radius:16px; border:1px solid var(--border);
-        overflow:hidden;
-    }
-   .table-header {
-        padding:20px 24px; border-bottom:1px solid var(--border);
-        display:flex; justify-content:space-between; align-items:center;
-    }
-   .table-header h3 {font-size:18px; font-weight:700;}
-   .filter-tabs {display:flex; gap:8px;}
-   .tab {
-        padding:8px 16px; border-radius:8px; border:none; background:var(--bg);
-        font-weight:600; font-size:14px; cursor:pointer; transition:all 0.2s;
-    }
-   .tab.active {background:var(--primary); color:#fff;}
-
-   .app-row {
-        padding:24px; border-bottom:1px solid var(--border);
-        display:grid; grid-template-columns:auto 1fr auto; gap:20px;
-        align-items:start; transition:background 0.2s;
-    }
-   .app-row:hover {background:var(--bg);}
-   .app-row:last-child {border-bottom:none;}
-   .app-avatar {
-        width:60px; height:60px; border-radius:50%; background:linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-        display:flex; align-items:center; justify-content:center; font-size:24px; color:var(--primary);
-        font-weight:700;
-    }
-   .app-details h4 {font-size:18px; font-weight:700; margin-bottom:6px;}
-   .app-details p {color:var(--text-light); font-size:14px; margin-bottom:12px;}
-   .app-meta {
-        display:flex; flex-wrap:wrap; gap:16px; margin-bottom:12px;
-    }
-   .meta-badge {
-        display:flex; align-items:center; gap:6px; font-size:13px;
-        background:var(--bg); padding:6px 12px; border-radius:6px;
-    }
-   .meta-badge i {color:var(--primary);}
-   .app-actions {display:flex; flex-direction:column; gap:8px;}
-   .btn-sm {
-        padding:10px 20px; border-radius:8px; font-weight:600; font-size:14px;
-        cursor:pointer; border:none; transition:all 0.2s; white-space:nowrap;
-    }
-   .btn-sm-primary {background:var(--primary); color:#fff;}
-   .btn-sm-primary:hover {background:var(--primary-dark);}
-   .btn-sm-outline {background:transparent; color:var(--primary); border:1.5px solid var(--primary);}
-   .btn-sm-outline:hover {background:var(--primary); color:#fff;}
-   .btn-sm-danger {background:var(--danger); color:#fff;}
-   .btn-sm-danger:hover {background:#dc2626;}
-   .status-badge {
-        padding:6px 12px; border-radius:6px; font-size:12px; font-weight:700;
-        display:inline-block;
-    }
-   .status-new {background:#dbeafe; color:#1e40af;}
-   .status-viewed {background:#fef3c7; color:#92400e;}
-   .status-shortlisted {background:#dcfce7; color:#166534;}
-   .status-rejected {background:#fee2e2; color:#991b1b;}
-   .empty-state {padding:60px 20px; text-align:center;}
-   .empty-state i {font-size:64px; color:var(--text-light); margin-bottom:20px;}
-
-    @media(max-width:768px){
-       .app-row {grid-template-columns:1fr; text-align:center;}
-       .app-avatar {margin:0 auto;}
-       .app-actions {flex-direction:row; justify-content:center;}
-       .job-info-bar {text-align:center;}
-       .stats-row {width:100%; justify-content:center;}
-    }
-</style>
-{% endblock %}
+{% block title %}Job Applications - SureJob{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="page-header">
-        <h2>Job Applications</h2>
-        <p>Manage candidates who applied for your job</p>
-    </div>
+<div class="container my-5">
+    <h2 class="mb-4">Applications for: {{ job['title'] }}</h2>
+    <a href="/company-dashboard" class="btn btn-secondary mb-3"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
 
-    <div class="job-info-bar">
-        <div>
-            <h3>{{ job.title }}</h3>
-            <p><i class="fas fa-map-marker-alt"></i> {{ job.location }} • <i class="fas fa-briefcase"></i> {{ job.experience or 'Any' }}</p>
-        </div>
-        <div class="stats-row">
-            <div class="stat-box">
-                <strong>{{ applications|length }}</strong>
-                <span>Total</span>
-            </div>
-            <div class="stat-box">
-                <strong>{{ applications|selectattr('status', 'equalto', 'Shortlisted')|list|length }}</strong>
-                <span>Shortlisted</span>
-            </div>
-            <div class="stat-box">
-                <strong>{{ applications|selectattr('status', 'equalto', 'New')|list|length }}</strong>
-                <span>New</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="applications-table">
-        <div class="table-header">
-            <h3><i class="fas fa-users"></i> All Applications</h3>
-            <div class="filter-tabs">
-                <button class="tab active" onclick="filterApps('all')">All</button>
-                <button class="tab" onclick="filterApps('New')">New</button>
-                <button class="tab" onclick="filterApps('Shortlisted')">Shortlisted</button>
-            </div>
-        </div>
-
-        {% if applications %}
-            {% for app in applications %}
-            <div class="app-row" data-status="{{ app.status }}">
-                <div class="app-avatar">
-                    {{ app.name[0]|upper }}
-                </div>
-                <div class="app-details">
-                    <h4>{{ app.name }}</h4>
-                    <p>{{ app.email }} • {{ app.phone or 'No phone' }}</p>
-
-                    <div class="app-meta">
-                        <span class="meta-badge">
-                            <i class="fas fa-graduation-cap"></i> {{ app.experience or 'Not specified' }}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Candidate Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Applied Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for app in applications %}
+                <tr>
+                    <td>{{ app['candidate_name'] }}</td>
+                    <td>{{ app['candidate_email'] }}</td>
+                    <td>{{ app['candidate_phone'] }}</td>
+                    <td>{{ app['applied_date'] }}</td>
+                    <td>
+                        <span class="badge bg-{{ 'success' if app['status'] == 'Accepted' else 'warning' if app['status'] == 'Pending' else 'danger' }}">
+                            {{ app['status'] }}
                         </span>
-                        <span class="meta-badge">
-                            <i class="far fa-calendar"></i> Applied {{ app.applied_on or 'Recently' }}
-                        </span>
-                        <span class="status-badge status-{{ app.status|lower }}">{{ app.status or 'New' }}</span>
-                    </div>
-
-                    {% if app.cover_letter %}
-                    <div style="margin-top:12px; padding:12px; background:var(--bg); border-radius:8px; font-size:14px; line-height:1.6;">
-                        <strong>Cover Letter:</strong> {{ app.cover_letter }}
-                    </div>
-                    {% endif %}
-                </div>
-                <div class="app-actions">
-                    {% if app.resume %}
-                    <a href="/{{ app.resume }}" target="_blank" class="btn-sm btn-sm-primary">
-                        <i class="fas fa-download"></i> Resume
-                    </a>
-                    {% endif %}
-                    <button class="btn-sm btn-sm-outline" onclick="updateStatus({{ app.id }}, 'Shortlisted')">
-                        <i class="fas fa-star"></i> Shortlist
-                    </button>
-                    <button class="btn-sm btn-sm-danger" onclick="updateStatus({{ app.id }}, 'Rejected')">
-                        <i class="fas fa-times"></i> Reject
-                    </button>
-                </div>
-            </div>
-            {% endfor %}
-        {% else %}
-            <div class="empty-state">
-                <i class="fas fa-inbox"></i>
-                <h3>No applications yet</h3>
-                <p style="color:var(--text-light); margin-top:12px;">Candidates will appear here once they apply</p>
-            </div>
-        {% endif %}
-    </div>
-
-    <div style="text-align:center; margin-top:24px;">
-        <a href="/company-dashboard" style="color:var(--text-light); text-decoration:none;">
-            <i class="fas fa-arrow-left"></i> Back to Dashboard
-        </a>
+                    </td>
+                    <td>
+                        <form method="POST" action="/update-application-status/{{ app['id'] }}" class="d-inline">
+                            <select name="status" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
+                                <option {{ 'selected' if app['status'] == 'Pending' }}>Pending</option>
+                                <option {{ 'selected' if app['status'] == 'Accepted' }}>Accepted</option>
+                                <option {{ 'selected' if app['status'] == 'Rejected' }}>Rejected</option>
+                            </select>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center">No applications received yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
-
-<script>
-function filterApps(status) {
-    const rows = document.querySelectorAll('.app-row');
-    const tabs = document.querySelectorAll('.tab');
-
-    tabs.forEach(t => t.classList.remove('active'));
-    event.target.classList.add('active');
-
-    rows.forEach(row => {
-        if (status === 'all' || row.dataset.status === status) {
-            row.style.display = 'grid';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-}
-
-function updateStatus(appId, status) {
-    if (!confirm(`Mark this candidate as ${status}?`)) return;
-
-    fetch(`/update-application/${appId}`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({status: status})
-    })
-   .then(r => r.json())
-   .then(data => {
-        if (data.success) {
-            alert(`Application marked as ${status}`);
-            location.reload();
-        } else {
-            alert('Error updating status');
-        }
-    });
-}
-</script>
 {% endblock %}
