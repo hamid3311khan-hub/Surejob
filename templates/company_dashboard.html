@@ -41,27 +41,21 @@
                 </tr>
             </thead>
             <tbody>
-                {% for job in jobs %}
-                <tr>
-                    <td>{{ job['title'] }}</td>
-                    <td>{{ job['location'] }}</td>
-                    <td>{{ job['job_type'] }}</td>
-                    <td>
-                        <a href="/job-applications/{{ job['id'] }}" class="badge bg-primary text-decoration-none">
-                            {{ job['application_count'] }} View
-                        </a>
-                    </td>
-                    <td>{{ job['posted_date'] }}</td>
-                    <td>
-                        <a href="/edit-job/{{ job['id'] }}" class="btn btn-sm btn-outline-secondary">Edit</a>
-                        <a href="/delete-job/{{ job['id'] }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this job?')">Delete</a>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="6" class="text-center">No jobs posted yet. <a href="/post-job">Post your first job</a></td>
-                </tr>
-                {% endfor %}
+    {% for job in jobs %}
+    <tr>
+        <td>{{ job['title'] }}</td>
+        <td>
+            <a href="/job-applications/{{ job['id'] }}" class="text-decoration-none">
+                <span class="badge bg-primary rounded-pill">{{ job['app_count'] }}</span>
+            </a>
+        </td>
+        <td>
+            <a href="/edit-job/{{ job['id'] }}" class="btn btn-sm btn-outline-primary">Edit</a>
+            <a href="/delete-job/{{ job['id'] }}" class="btn btn-sm btn-outline-danger" 
+               onclick="return confirm('Are you sure?')">Delete</a>
+        </td>
+    </tr>
+    {% endfor %}
             </tbody>
         </table>
     </div>
