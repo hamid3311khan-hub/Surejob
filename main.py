@@ -7,7 +7,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", 'surejob_v3_2026_secure_key_change_this')
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 
 UPLOAD_FOLDER = 'static/logos'
 RESUME_FOLDER = 'static/resumes'
@@ -498,4 +498,4 @@ def update_status(app_id, status):
         FROM applications a
         JOIN jobs j ON a.job_id = j.id
         WHERE a.id =? AND j.company_id =?
-    ''', (app_id, sessi
+    ''', (app_id
