@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h3><i class="fas fa-tachometer-alt"></i> Welcome, {{ session['candidate_name'] }}</h3>
+    <hr>
+    <h5 class="mb-3">My Applications</h5>
+    {% if applications %}
+    <table class="table table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>Job Title</th>
+                <th>Company</th>
+                <th>Location</th>
+                <th>Status</th>
+                <th>Applied On</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for app in applications %}
+            <tr>
+                <td>{{ app.title }}</td>
+                <td>{{ app.company_name }}</td>
+                <td>{{ app.location }}</td>
+                <td>
+                    {% if app.status == 'New' %}
+                        <span class="badge bg-primary">Applied</span>
+                    {% elif app.status == 'Shortlisted' %}
+                        <span class="badge bg-success">Shortlisted</span>
+                    {% elif app.status == 'Interview' %}
+                        <span class="badge bg-warning text-dark">Interview</span>
+                    {% elif app.status == 'Rejected' %}
+                        <span class="badge bg-danger">Rejected</span>
+                    {% endif %}
+                </td>
+                <td>{{ app.applied_on }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="alert alert-info">You haven't applied to any jobs yet. <a href="/">Browse Jobs</a></div>
+    {% endif %}
+</div>
+{% endblock %}
