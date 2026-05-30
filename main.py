@@ -1,11 +1,11 @@
 from flask import Flask, render_template_string, request, redirect, session
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", 'surejob_v3_2026_final')
+app.secret_key = os.environ.get("SECRET_KEY", 'surejob_final_2026')
 
 def get_db():
     conn = sqlite3.connect('surejob.db')
@@ -28,42 +28,81 @@ BASE_HTML = '''
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SureJob</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+<style>
+.hero {background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); color: white; padding: 60px 0;}
+.search-box {background: white; border-radius: 10px; padding: 20px; margin-top: -40px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);}
+.job-card:hover {transform: translateY(-5px); transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.1);}
+</style>
 </head><body>
-<nav class="navbar navbar-dark bg-primary">
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
 <div class="container">
-<a class="navbar-brand fw-bold" href="/">SureJob</a>
-<div>
+<a class="navbar-brand fw-bold text-primary" href="/">Sure Job</a>
+<div class="ms-auto d-flex gap-2">
 {% if session.candidate_id %}
-<a class="btn btn-light btn-sm" href="/candidate-dashboard">{{ session.candidate_name }}</a>
-<a class="btn btn-outline-light btn-sm" href="/logout">Logout</a>
+<a class="btn btn-outline-primary btn-sm" href="/candidate-dashboard"><i class="bi bi-person"></i> {{ session.candidate_name }}</a>
+<a class="btn btn-primary btn-sm" href="/logout">Logout</a>
 {% elif session.company_id %}
-<a class="btn btn-light btn-sm" href="/company-dashboard">{{ session.company_name }}</a>
-<a class="btn btn-outline-light btn-sm" href="/logout">Logout</a>
+<a class="btn btn-outline-primary btn-sm" href="/company-dashboard"><i class="bi bi-building"></i> {{ session.company_name }}</a>
+<a class="btn btn-primary btn-sm" href="/logout">Logout</a>
 {% else %}
-<a class="btn btn-light btn-sm" href="/candidate-login">Candidate</a>
-<a class="btn btn-outline-light btn-sm" href="/company-login">Company</a>
+<a class="btn btn-outline-primary btn-sm" href="/candidate-login"><i class="bi bi-box-arrow-in-right"></i> Job Seeker Login</a>
+<a class="btn btn-outline-primary btn-sm" href="/candidate-register"><i class="bi bi-person-plus"></i> Job Seeker Register</a>
+<a class="btn btn-primary btn-sm" href="/company-login"><i class="bi bi-building"></i> Employer</a>
 {% endif %}
 </div></div></nav>
-<div class="container my-4">{{ content|safe }}</div>
+{{ content|safe }}
+<footer class="bg-dark text-white text-center py-3 mt-5"><p class="mb-0">© 2026 SureJob</p></footer>
 </body></html>
 '''
 
 @app.route('/')
 def home():
     conn = get_db()
-    jobs = conn.execute('SELECT j.*, c.company_name FROM jobs j LEFT JOIN companies c ON j.company_id = c.id ORDER BY j.id DESC LIMIT 20').fetchall()
+    search = request.args.get('search', '')
+    location = request.args.get('location', '')
+    query = 'SELECT j.*, c.company_name FROM jobs j LEFT JOIN companies c ON j.company_id = c.id WHERE 1=1'
+    params = []
+    if search:
+        query += ' AND (j.title LIKE ? OR j.category LIKE ? OR c.company_name LIKE ?)'
+        params.extend([f'%{search}%', f'%{search}%', f'%{search}%'])
+    if location:
+        query += ' AND j.location LIKE ?'
+        params.append(f'%{location}%')
+    query += ' ORDER BY j.id DESC LIMIT 20'
+    jobs = conn.execute(query, params).fetchall()
     conn.close()
+    
     job_cards = ""
     for job in jobs:
         job_cards += f'''
-        <div class="col-md-6 mb-3">
-        <div class="card"><div class="card-body">
+        <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card job-card h-100"><div class="card-body">
         <h5 class="card-title">{job['title']}</h5>
-        <h6 class="card-subtitle mb-2 text-muted">{job['company_name'] or 'Company'} - {job['location']}</h6>
-        <p class="card-text">{job['salary']} | {job['category']}</p>
-        <a href="/job/{job['id']}" class="btn btn-primary btn-sm">View & Apply</a>
+        <p class="text-muted mb-2"><i class="bi bi-building"></i> {job['company_name'] or 'Company'} | <i class="bi bi-geo-alt"></i> {job['location']}</p>
+        <p class="mb-2"><span class="badge bg-success">{job['salary']}</span> <span class="badge bg-secondary">{job['category']}</span></p>
+        <p class="text-muted small"><i class="bi bi-eye"></i> {job['views']} views</p>
+        <a href="/job/{job['id']}" class="btn btn-primary btn-sm w-100">View Details</a>
         </div></div></div>'''
-    content = f'<h3>Latest Jobs</h3><div class="row">{job_cards}</div>' if jobs else '<div class="alert alert-info">No jobs posted yet</div>'
+    
+    content = f'''
+    <div class="hero text-center">
+        <div class="container">
+            <h1 class="display-4 fw-bold">Find Your Dream Job Today</h1>
+            <p class="lead">Explore 5000+ opportunities from India's top companies</p>
+        </div>
+    </div>
+    <div class="container">
+        <div class="search-box">
+            <form method="get" class="row g-2">
+                <div class="col-md-5"><input name="search" class="form-control form-control-lg" placeholder="Job title, skills, or company" value="{search}"></div>
+                <div class="col-md-5"><input name="location" class="form-control form-control-lg" placeholder="All Locations" value="{location}"></div>
+                <div class="col-md-2"><button class="btn btn-primary btn-lg w-100">Search</button></div>
+            </form>
+        </div>
+        <h3 class="mt-5 mb-4">Latest Jobs</h3>
+        <div class="row">{job_cards if jobs else '<div class="col-12"><div class="alert alert-info">No jobs found</div></div>'}</div>
+    </div>'''
     return render_template_string(BASE_HTML.replace('{{ content|safe }}', content))
 
 @app.route('/candidate-register', methods=['GET', 'POST'])
@@ -74,7 +113,8 @@ def candidate_register():
         phone = request.form.get('phone', '').strip()
         password = request.form.get('password', '').strip()
         if not all([name, email, phone, password]):
-            return render_template_string(BASE_HTML.replace('{{ content|safe }}', '<div class="alert alert-danger">All fields required</div>'))
+            msg = '<div class="container my-5"><div class="alert alert-danger">All fields required</div></div>'
+            return render_template_string(BASE_HTML.replace('{{ content|safe }}', msg))
         hashed_password = generate_password_hash(password)
         conn = get_db()
         try:
@@ -84,16 +124,17 @@ def candidate_register():
             return redirect('/candidate-login')
         except:
             conn.close()
-            return render_template_string(BASE_HTML.replace('{{ content|safe }}', '<div class="alert alert-danger">Email already exists</div>'))
-    form = '''<div class="row justify-content-center"><div class="col-md-6">
-    <h3>Candidate Registration</h3>
+            msg = '<div class="container my-5"><div class="alert alert-danger">Email already exists</div></div>'
+            return render_template_string(BASE_HTML.replace('{{ content|safe }}', msg))
+    form = '''<div class="container my-5"><div class="row justify-content-center"><div class="col-md-6">
+    <div class="card"><div class="card-body p-4"><h3 class="text-center mb-4">Job Seeker Registration</h3>
     <form method="post">
-    <div class="mb-3"><input name="name" class="form-control" placeholder="Full Name" required></div>
-    <div class="mb-3"><input name="email" type="email" class="form-control" placeholder="Email" required></div>
-    <div class="mb-3"><input name="phone" class="form-control" placeholder="Phone" required></div>
-    <div class="mb-3"><input name="password" type="password" class="form-control" placeholder="Password" required></div>
-    <button class="btn btn-primary w-100">Register</button>
-    </form></div></div>'''
+    <div class="mb-3"><label>Full Name</label><input name="name" class="form-control" required></div>
+    <div class="mb-3"><label>Email</label><input name="email" type="email" class="form-control" required></div>
+    <div class="mb-3"><label>Phone</label><input name="phone" class="form-control" required></div>
+    <div class="mb-3"><label>Password</label><input name="password" type="password" class="form-control" required></div>
+    <button class="btn btn-primary w-100">Register Now</button>
+    </form></div></div></div>'''
     return render_template_string(BASE_HTML.replace('{{ content|safe }}', form))
 
 @app.route('/candidate-login', methods=['GET', 'POST'])
@@ -109,14 +150,16 @@ def candidate_login():
             session['candidate_name'] = candidate['name']
             session['candidate_email'] = candidate['email']
             return redirect('/candidate-dashboard')
-        return render_template_string(BASE_HTML.replace('{{ content|safe }}', '<div class="alert alert-danger">Invalid credentials</div>'))
-    form = '''<div class="row justify-content-center"><div class="col-md-6">
-    <h3>Candidate Login</h3>
+        msg = '<div class="container my-5"><div class="alert alert-danger">Invalid credentials</div></div>'
+        return render_template_string(BASE_HTML.replace('{{ content|safe }}', msg))
+    form = '''<div class="container my-5"><div class="row justify-content-center"><div class="col-md-6">
+    <div class="card"><div class="card-body p-4"><h3 class="text-center mb-4">Job Seeker Login</h3>
     <form method="post">
-    <div class="mb-3"><input name="email" type="email" class="form-control" placeholder="Email" required></div>
-    <div class="mb-3"><input name="password" type="password" class="form-control" placeholder="Password" required></div>
+    <div class="mb-3"><label>Email</label><input name="email" type="email" class="form-control" required></div>
+    <div class="mb-3"><label>Password</label><input name="password" type="password" class="form-control" required></div>
     <button class="btn btn-primary w-100">Login</button>
-    </form><p class="mt-3">New user? <a href="/candidate-register">Register here</a></p></div></div>'''
+    </form><p class="text-center mt-3">New user? <a href="/candidate-register">Register here</a></p>
+    </div></div></div></div></div>'''
     return render_template_string(BASE_HTML.replace('{{ content|safe }}', form))
 
 @app.route('/candidate-dashboard')
@@ -129,10 +172,10 @@ def candidate_dashboard():
     rows = ""
     for app in apps:
         rows += f"<tr><td>{app['title']}</td><td>{app['company_name'] or ''}</td><td>{app['location']}</td><td><span class='badge bg-info'>{app['status']}</span></td></tr>"
-    content = f'''<h3>Welcome {session['candidate_name']}</h3>
+    content = f'''<div class="container my-5"><h3>Welcome {session['candidate_name']}</h3>
     <h5 class="mt-4">My Applications</h5>
-    <table class="table"><thead><tr><th>Job</th><th>Company</th><th>Location</th><th>Status</th></tr></thead>
-    <tbody>{rows}</tbody></table>''' if apps else f'<h3>Welcome {session["candidate_name"]}</h3><div class="alert alert-info">No applications yet</div>'
+    <div class="card"><div class="card-body"><table class="table"><thead><tr><th>Job</th><th>Company</th><th>Location</th><th>Status</th></tr></thead>
+    <tbody>{rows}</tbody></table></div></div></div>''' if apps else f'<div class="container my-5"><h3>Welcome {session["candidate_name"]}</h3><div class="alert alert-info">No applications yet. Start applying!</div></div>'
     return render_template_string(BASE_HTML.replace('{{ content|safe }}', content))
 
 @app.route('/company-register', methods=['GET', 'POST'])
@@ -143,7 +186,8 @@ def company_register():
         phone = request.form.get('phone', '').strip()
         password = request.form.get('password', '').strip()
         if not all([company_name, email, phone, password]):
-            return render_template_string(BASE_HTML.replace('{{ content|safe }}', '<div class="alert alert-danger">All fields required</div>'))
+            msg = '<div class="container my-5"><div class="alert alert-danger">All fields required</div></div>'
+            return render_template_string(BASE_HTML.replace('{{ content|safe }}', msg))
         hashed_password = generate_password_hash(password)
         conn = get_db()
         try:
@@ -153,16 +197,17 @@ def company_register():
             return redirect('/company-login')
         except:
             conn.close()
-            return render_template_string(BASE_HTML.replace('{{ content|safe }}', '<div class="alert alert-danger">Email already exists</div>'))
-    form = '''<div class="row justify-content-center"><div class="col-md-6">
-    <h3>Company Registration</h3>
+            msg = '<div class="container my-5"><div class="alert alert-danger">Email already exists</div></div>'
+            return render_template_string(BASE_HTML.replace('{{ content|safe }}', msg))
+    form = '''<div class="container my-5"><div class="row justify-content-center"><div class="col-md-6">
+    <div class="card"><div class="card-body p-4"><h3 class="text-center mb-4">Employer Registration</h3>
     <form method="post">
-    <div class="mb-3"><input name="company_name" class="form-control" placeholder="Company Name" required></div>
-    <div class="mb-3"><input name="email" type="email" class="form-control" placeholder="Email" required></div>
-    <div class="mb-3"><input name="phone" class="form-control" placeholder="Phone" required></div>
-    <div class="mb-3"><input name="password" type="password" class="form-control" placeholder="Password" required></div>
-    <button class="btn btn-primary w-100">Register</button>
-    </form></div></div>'''
+    <div class="mb-3"><label>Company Name</label><input name="company_name" class="form-control" required></div>
+    <div class="mb-3"><label>Email</label><input name="email" type="email" class="form-control" required></div>
+    <div class="mb-3"><label>Phone</label><input name="phone" class="form-control" required></div>
+    <div class="mb-3"><label>Password</label><input name="password" type="password" class="form-control" required></div>
+    <button class="btn btn-primary w-100">Register Company</button>
+    </form></div></div></div>'''
     return render_template_string(BASE_HTML.replace('{{ content|safe }}', form))
 
 @app.route('/company-login', methods=['GET', 'POST'])
@@ -177,14 +222,16 @@ def company_login():
             session['company_id'] = company['id']
             session['company_name'] = company['company_name']
             return redirect('/company-dashboard')
-        return render_template_string(BASE_HTML.replace('{{ content|safe }}', '<div class="alert alert-danger">Invalid credentials</div>'))
-    form = '''<div class="row justify-content-center"><div class="col-md-6">
-    <h3>Company Login</h3>
+        msg = '<div class="container my-5"><div class="alert alert-danger">Invalid credentials</div></div>'
+        return render_template_string(BASE_HTML.replace('{{ content|safe }}', msg))
+    form = '''<div class="container my-5"><div class="row justify-content-center"><div class="col-md-6">
+    <div class="card"><div class="card-body p-4"><h3 class="text-center mb-4">Employer Login</h3>
     <form method="post">
-    <div class="mb-3"><input name="email" type="email" class="form-control" placeholder="Email" required></div>
-    <div class="mb-3"><input name="password" type="password" class="form-control" placeholder="Password" required></div>
+    <div class="mb-3"><label>Email</label><input name="email" type="email" class="form-control" required></div>
+    <div class="mb-3"><label>Password</label><input name="password" type="password" class="form-control" required></div>
     <button class="btn btn-primary w-100">Login</button>
-    </form><p class="mt-3">New company? <a href="/company-register">Register here</a></p></div></div>'''
+    </form><p class="text-center mt-3">New company? <a href="/company-register">Register here</a></p>
+    </div></div></div></div></div>'''
     return render_template_string(BASE_HTML.replace('{{ content|safe }}', form))
 
 @app.route('/company-dashboard')
@@ -197,10 +244,10 @@ def company_dashboard():
     rows = ""
     for job in jobs:
         rows += f"<tr><td>{job['title']}</td><td>{job['location']}</td><td>{job['views']}</td><td>{job['app_count']}</td><td><a href='/job-apps/{job['id']}' class='btn btn-sm btn-info'>View Apps</a></td></tr>"
-    content = f'''<h3>{session['company_name']} Dashboard</h3>
-    <a href="/post-job" class="btn btn-success mb-3">Post New Job</a>
-    <table class="table"><thead><tr><th>Job Title</th><th>Location</th><th>Views</th><th>Applications</th><th>Action</th></tr></thead>
-    <tbody>{rows}</tbody></table>''' if jobs else f'<h3>{session["company_name"]} Dashboard</h3><a href="/post-job" class="btn btn-success mb-3">Post New Job</a><div class="alert alert-info">No jobs posted yet</div>'
+    content = f'''<div class="container my-5"><h3>{session['company_name']} Dashboard</h3>
+    <a href="/post-job" class="btn btn-success mb-3"><i class="bi bi-plus-circle"></i> Post New Job</a>
+    <div class="card"><div class="card-body"><table class="table"><thead><tr><th>Job Title</th><th>Location</th><th>Views</th><th>Applications</th><th>Action</th></tr></thead>
+    <tbody>{rows}</tbody></table></div></div></div>''' if jobs else f'<div class="container my-5"><h3>{session["company_name"]} Dashboard</h3><a href="/post-job" class="btn btn-success mb-3"><i class="bi bi-plus-circle"></i> Post New Job</a><div class="alert alert-info">No jobs posted yet</div></div>'
     return render_template_string(BASE_HTML.replace('{{ content|safe }}', content))
 
 @app.route('/post-job', methods=['GET', 'POST'])
@@ -214,24 +261,25 @@ def post_job():
         category = request.form.get('category', '').strip()
         description = request.form.get('description', '').strip()
         if not all([title, location, salary, category]):
-            return render_template_string(BASE_HTML.replace('{{ content|safe }}', '<div class="alert alert-danger">Fill all required fields</div>'))
+            msg = '<div class="container my-5"><div class="alert alert-danger">Fill all required fields</div></div>'
+            return render_template_string(BASE_HTML.replace('{{ content|safe }}', msg))
         conn = get_db()
         conn.execute('INSERT INTO jobs (company_id, title, location, salary, category, description, posted_on) VALUES (?,?,?,?,?,?,?)', (session['company_id'], title, location, salary, category, description, datetime.now().strftime('%Y-%m-%d')))
         conn.commit()
         conn.close()
         return redirect('/company-dashboard')
-    form = '''<div class="row justify-content-center"><div class="col-md-8">
-    <h3>Post New Job</h3>
+    form = '''<div class="container my-5"><div class="row justify-content-center"><div class="col-md-8">
+    <div class="card"><div class="card-body p-4"><h3 class="mb-4">Post New Job</h3>
     <form method="post">
-    <div class="mb-3"><input name="title" class="form-control" placeholder="Job Title" required></div>
-    <div class="mb-3"><input name="location" class="form-control" placeholder="Location" required></div>
-    <div class="mb-3"><input name="salary" class="form-control" placeholder="Salary e.g. 5-8 LPA" required></div>
-    <div class="mb-3"><select name="category" class="form-control" required>
+    <div class="mb-3"><label>Job Title *</label><input name="title" class="form-control" required></div>
+    <div class="mb-3"><label>Location *</label><input name="location" class="form-control" required></div>
+    <div class="mb-3"><label>Salary *</label><input name="salary" class="form-control" placeholder="e.g. 5-8 LPA" required></div>
+    <div class="mb-3"><label>Category *</label><select name="category" class="form-control" required>
     <option value="">Select Category</option><option>IT Software</option><option>Sales & Marketing</option><option>BPO</option><option>HR & Admin</option><option>Other</option>
     </select></div>
-    <div class="mb-3"><textarea name="description" class="form-control" rows="5" placeholder="Job Description"></textarea></div>
+    <div class="mb-3"><label>Job Description</label><textarea name="description" class="form-control" rows="5"></textarea></div>
     <button class="btn btn-primary w-100">Post Job</button>
-    </form></div></div>'''
+    </form></div></div></div></div></div>'''
     return render_template_string(BASE_HTML.replace('{{ content|safe }}', form))
 
 @app.route('/job/<int:job_id>', methods=['GET', 'POST'])
@@ -253,46 +301,17 @@ def job_detail(job_id):
         conn.execute('INSERT INTO applications (job_id, name, email, phone, applied_on) VALUES (?,?,?,?,?)', (job_id, name, email, phone, datetime.now().strftime('%Y-%m-%d %H:%M')))
         conn.commit()
         conn.close()
-        return render_template_string(BASE_HTML.replace('{{ content|safe }}', '<div class="alert alert-success">Applied Successfully!</div><a href="/" class="btn btn-primary">Back to Jobs</a>'))
+        msg = '<div class="container my-5"><div class="alert alert-success">Applied Successfully!</div><a href="/" class="btn btn-primary">Back to Jobs</a></div>'
+        return render_template_string(BASE_HTML.replace('{{ content|safe }}', msg))
     conn.close()
     apply_form = f'''<form method="post">
-    <div class="mb-3"><input name="phone" class="form-control" placeholder="Your Phone" value="" required></div>
+    <div class="mb-3"><label>Your Phone</label><input name="phone" class="form-control" required></div>
     <button class="btn btn-success w-100">Apply Now</button>
-    </form>''' if 'candidate_id' in session else '<a href="/candidate-login" class="btn btn-primary">Login to Apply</a>'
-    content = f'''<div class="row"><div class="col-md-8">
-    <h3>{job['title']}</h3>
-    <h5 class="text-muted">{job['company_name'] or 'Company'} - {job['location']}</h5>
-    <p><b>Salary:</b> {job['salary']} | <b>Category:</b> {job['category']} | <b>Views:</b> {job['views']}</p>
-    <hr><p>{job['description'] or 'No description'}</p>
+    </form>''' if 'candidate_id' in session else '<a href="/candidate-login" class="btn btn-primary w-100">Login to Apply</a>'
+    content = f'''<div class="container my-5"><div class="row"><div class="col-md-8">
+    <h2>{job['title']}</h2>
+    <p class="text-muted"><i class="bi bi-building"></i> {job['company_name'] or 'Company'} | <i class="bi bi-geo-alt"></i> {job['location']}</p>
+    <p><span class="badge bg-success fs-6">{job['salary']}</span> <span class="badge bg-secondary fs-6">{job['category']}</span> <span class="badge bg-info fs-6"><i class="bi bi-eye"></i> {job['views']} views</span></p>
+    <hr><h5>Job Description</h5><p>{job['description'] or 'No description provided'}</p>
     </div><div class="col-md-4"><div class="card"><div class="card-body">
-    <h5>Apply for this Job</h5>{apply_form}
-    </div></div></div></div>'''
-    return render_template_string(BASE_HTML.replace('{{ content|safe }}', content))
-
-@app.route('/job-apps/<int:job_id>')
-def job_apps(job_id):
-    if 'company_id' not in session:
-        return redirect('/company-login')
-    conn = get_db()
-    job = conn.execute('SELECT * FROM jobs WHERE id=? AND company_id=?', (job_id, session['company_id'])).fetchone()
-    if not job:
-        conn.close()
-        return redirect('/company-dashboard')
-    apps = conn.execute('SELECT * FROM applications WHERE job_id=? ORDER BY id DESC', (job_id,)).fetchall()
-    conn.close()
-    rows = ""
-    for app in apps:
-        rows += f"<tr><td>{app['name']}</td><td>{app['email']}</td><td>{app['phone']}</td><td>{app['applied_on']}</td><td>{app['status']}</td></tr>"
-    content = f'''<h3>Applications for: {job['title']}</h3>
-    <a href="/company-dashboard" class="btn btn-secondary btn-sm mb-3">Back</a>
-    <table class="table"><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Applied On</th><th>Status</th></tr></thead>
-    <tbody>{rows}</tbody></table>''' if apps else f'<h3>Applications for: {job["title"]}</h3><div class="alert alert-info">No applications yet</div>'
-    return render_template_string(BASE_HTML.replace('{{ content|safe }}', content))
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect('/')
-
-if __name__ == '__main__':
-    app.run()
+    <h5>Apply for this Job</h5>{ap
