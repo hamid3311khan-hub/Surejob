@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}All Jobs - SureJob{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h2 class="text-center mb-4">All Available Jobs</h2>
+    <div class="row">
+        {% for job in jobs %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card job-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ job['title'] }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ job['company_name'] }}</h6>
+                    <p class="mb-1"><i class="bi bi-geo-alt"></i> {{ job['location'] }}</p>
+                    <p class="mb-1"><i class="bi bi-briefcase"></i> {{ job['job_type'] }} | {{ job['experience'] }}</p>
+                    <p class="mb-3"><i class="bi bi-cash"></i> {{ job['salary'] }}</p>
+                    <a href="/job/{{ job['id'] }}" class="btn btn-primary btn-sm">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">No jobs posted yet.</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
