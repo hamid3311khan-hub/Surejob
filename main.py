@@ -7,7 +7,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", 'surejob_v3_2026_secure_key_change_this')
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024
 
 UPLOAD_FOLDER = 'static/logos'
 RESUME_FOLDER = 'static/resumes'
@@ -40,6 +40,15 @@ def init_db():
         registered_on TEXT,
         plan_expiry TEXT,
         status TEXT DEFAULT 'Active')""")
+
+    conn.execute("""CREATE TABLE IF NOT EXISTS candidates (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        email TEXT UNIQUE,
+        phone TEXT,
+        password TEXT,
+        resume TEXT,
+        registered_on TEXT)""")
 
     conn.execute("""CREATE TABLE IF NOT EXISTS jobs (
         id INTEGER PRIMARY KEY,
@@ -208,6 +217,110 @@ def save_job(job_id):
         conn.close()
         return jsonify({'success': False, 'msg': 'Already saved'})
 
+# ===== CANDIDATE ROUTES =====
+@app.route('/candidate-register', methods=['GET', 'POST'])
+def candidate_register():
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip()
+        phone = request.form.get('phone', '').strip()
+        password = request.form.get('password', '').strip()
+
+        if not all([name, email, phone, password]):
+            flash('Sabhi fields required hain!', 'error')
+            return render_template('candidate_register.html')
+
+        hashed_password = generate_password_hash(password)
+        conn = get_db()
+        try:
+            conn.execute('INSERT INTO candidates (name, email, phone, password, registered_on) VALUES (?,?,?,?,?)',
+                (name, email, phone, hashed_password, datetime.now().strftime('%Y-%m-%d %H:%M')))
+            conn.commit()
+            flash('Registration successful! Ab login karo.', 'success')
+            conn.close()
+            return redirect('/candidate-login')
+        except sqlite3.IntegrityError:
+            conn.close()
+            flash('Ye Email already registered hai!', 'error')
+        except Exception as e:
+            conn.close()
+            flash(f'Error: {str(e)}', 'error')
+    return render_template('candidate_register.html')
+
+@app.route('/candidate-login', methods=['GET', 'POST'])
+def candidate_login():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '').strip()
+
+        if not email or not password:
+            flash('Email aur Password dono dalo!', 'error')
+            return render_template('candidate_login.html')
+
+        conn = get_db()
+        candidate = conn.execute('SELECT * FROM candidates WHERE email=?', (email,)).fetchone()
+        conn.close()
+
+        if candidate and check_password_hash(candidate['password'], password):
+            session['candidate_id'] = candidate['id']
+            session['candidate_name'] = candidate['name']
+            session['candidate_email'] = candidate['email']
+            flash('Login successful!', 'success')
+            return redirect('/candidate-dashboard')
+        flash('Invalid credentials!', 'error')
+    return render_template('candidate_login.html')
+
+@app.route('/candidate-dashboard')
+def candidate_dashboard():
+    if 'candidate_id' not in session:
+        return redirect('/candidate-login')
+
+    conn = get_db()
+    applications = conn.execute('''
+        SELECT a.*, j.title, j.location, j.salary, c.company_name
+        FROM applications a
+        JOIN jobs j ON a.job_id = j.id
+        LEFT JOIN companies c ON j.company_id = c.id
+        WHERE a.email =?
+        ORDER BY a.id DESC
+    ''', (session['candidate_email'],)).fetchall()
+    conn.close()
+
+    return render_template('candidate_dashboard.html', applications=applications)
+
+@app.route('/candidate-logout')
+def candidate_logout():
+    session.pop('candidate_id', None)
+    session.pop('candidate_name', None)
+    session.pop('candidate_email', None)
+    flash('Logged out successfully', 'success')
+    return redirect('/')
+
+@app.route('/quick-apply/<int:job_id>', methods=['POST'])
+def quick_apply(job_id):
+    if 'candidate_id' not in session:
+        flash('Pehle login karo!', 'error')
+        return redirect('/candidate-login')
+
+    conn = get_db()
+    existing = conn.execute('SELECT id FROM applications WHERE job_id=? AND email=?',
+                           (job_id, session['candidate_email'])).fetchone()
+    if existing:
+        flash('Aap is job pe already apply kar chuke ho!', 'error')
+        conn.close()
+        return redirect(f'/job/{job_id}')
+
+    candidate = conn.execute('SELECT * FROM candidates WHERE id=?', (session['candidate_id'],)).fetchone()
+
+    conn.execute('INSERT INTO applications (job_id, name, email, phone, resume, applied_on) VALUES (?,?,?,?,?,?)',
+        (job_id, candidate['name'], candidate['email'], candidate['phone'],
+         candidate['resume'] or '', datetime.now().strftime('%Y-%m-%d %H:%M')))
+    conn.commit()
+    conn.close()
+    flash('1-Click me apply ho gaya! Best of luck 🎉', 'success')
+    return redirect(f'/job/{job_id}')
+
+# ===== COMPANY ROUTES =====
 @app.route('/company-register', methods=['GET', 'POST'])
 def company_register():
     if request.method == 'POST':
@@ -370,89 +483,19 @@ def job_applications(job_id):
     conn.close()
     return render_template('job_applications.html', job=job, applications=applications)
 
-@app.route('/admin', methods=['GET', 'POST'])
-def admin():
-    if request.method == 'POST':
-        if request.form.get('password') == ADMIN_PASSWORD:
-            session['admin'] = True
-        else:
-            return render_template('admin_login.html', error='Invalid password')
-
-    if not session.get('admin'):
-        return render_template('admin_login.html')
-
-    conn = get_db()
-    companies = conn.execute('SELECT * FROM companies ORDER BY id DESC').fetchall()
-    jobs = conn.execute('SELECT jobs.*, companies.company_name FROM jobs JOIN companies ON jobs.company_id = companies.id ORDER BY jobs.id DESC').fetchall()
-    apps_count = conn.execute('SELECT COUNT(*) as count FROM applications').fetchone()['count']
-    conn.close()
-
-    return render_template('admin.html', companies=companies, jobs=jobs, apps_count=apps_count)
-
-@app.route('/toggle-featured/<int:job_id>')
-def toggle_featured(job_id):
-    if not session.get('admin'):
-        return redirect('/admin')
-    conn = get_db()
-    job = conn.execute('SELECT featured FROM jobs WHERE id=?', (job_id,)).fetchone()
-    new_status = 0 if job['featured'] else 1
-    conn.execute('UPDATE jobs SET featured=? WHERE id=?', (new_status, job_id))
-    conn.commit()
-    conn.close()
-    return redirect('/admin')
-
-@app.route('/static/<path:filename>')
-def static_files(filename):
-    return send_from_directory('.', filename)
-
-@app.route('/company-logout')
-def company_logout():
-    session.pop('company_id', None)
-    session.pop('company_name', None)
-    return redirect('/')
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect('/')
-
-@app.route('/check-db')
-def check_db():
-    conn = get_db()
-    job_count = conn.execute('SELECT COUNT(*) as total FROM jobs').fetchone()
-    conn.close()
-    return f"<h2>Jobs: {job_count['total']}</h2>"
-
-if __name__ == '__main__':
-    app.run(debug=True)
-    
 @app.route('/update-status/<int:app_id>/<status>')
 def update_status(app_id, status):
     if 'company_id' not in session:
         return redirect('/company-login')
-    
+
     if status not in ['Shortlisted', 'Interview', 'Rejected']:
         flash('Invalid status!', 'error')
         return redirect('/company-dashboard')
-    
+
     conn = get_db()
-    # Security: check karo ye application isi company ki job ka hai
     app_data = conn.execute('''
-        SELECT a.id, a.job_id, a.email, a.name, j.title, j.company_id 
-        FROM applications a 
-        JOIN jobs j ON a.job_id = j.id 
-        WHERE a.id = ? AND j.company_id = ?
-    ''', (app_id, session['company_id'])).fetchone()
-    
-    if not app_data:
-        conn.close()
-        flash('Application not found!', 'error')
-        return redirect('/company-dashboard')
-    
-    conn.execute('UPDATE applications SET status = ? WHERE id = ?', (status, app_id))
-    conn.commit()
-    conn.close()
-    
-    # Yaha email bhej sakte ho candidate ko - abhi ke liye skip
-    flash(f'{app_data["name"]} ko {status} mark kar diya!', 'success')
-    return redirect(f'/job-applications/{app_data["job_id"]}')
+        SELECT a.id, a.job_id, a.email, a.name, j.title, j.company_id
+        FROM applications a
+        JOIN jobs j ON a.job_id = j.id
+        WHERE a.id =? AND j.company_id =?
+    ''', (app_id, sessi
