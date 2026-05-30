@@ -1,59 +1,34 @@
 {% extends "base.html" %}
+{% block title %}SureJob - Find Your Dream Job{% endblock %}
 
-{% block title %}Find Jobs - SureJob{% endblock %}
+{% block content %}
+<div class="bg-primary text-white py-5">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold">Find Your Dream Job</h1>
+        <p class="lead">Search from thousands of jobs across India</p>
+        <a href="/jobs" class="btn btn-light btn-lg mt-3">Browse All Jobs</a>
+    </div>
+</div>
 
-{% block extra_css %}
-<style>
-    .hero {
-        background:linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-        padding:60px 5%; text-align:center; color:#fff;
-    }
-    .hero h1 {font-size:42px; font-weight:800; margin-bottom:16px;}
-    .hero p {font-size:18px; opacity:0.95; margin-bottom:32px;}
-    
-    .search-box {
-        max-width:900px; margin:0 auto; background:#fff; padding:8px;
-        border-radius:12px; display:flex; gap:8px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.2);
-    }
-    .search-input {
-        flex:1; padding:16px 20px; border:none; outline:none; font-size:16px;
-        border-radius:8px;
-    }
-    .search-btn {
-        background:var(--primary); color:#fff; border:none; padding:16px 32px;
-        border-radius:8px; font-weight:700; cursor:pointer; font-size:16px;
-    }
-    .search-btn:hover {background:var(--primary-dark);}
-    
-    .stats {
-        display:flex; justify-content:center; gap:48px; margin-top:40px;
-        flex-wrap:wrap;
-    }
-    .stat {text-align:center;}
-    .stat strong {display:block; font-size:32px; font-weight:800; margin-bottom:4px;}
-    .stat span {font-size:14px; opacity:0.9;}
-    
-    .container {max-width:1400px; margin:0 auto; padding:60px 5%;}
-    .section-title {font-size:32px; font-weight:800; margin-bottom:12px;}
-    .section-subtitle {color:var(--text-light); margin-bottom:40px; font-size:16px;}
-    
-    .filters {
-        background:#fff; padding:24px; border-radius:12px; border:1px solid var(--border);
-        margin-bottom:32px; display:flex; gap:12px; flex-wrap:wrap;
-    }
-    .filter-select {
-        padding:12px 16px; border:2px solid var(--border); border-radius:8px;
-        font-size:14px; outline:none; min-width:180px;
-    }
-    
-    .job-grid {
-        display:grid; grid-template-columns:repeat(auto-fill, minmax(380px, 1fr));
-        gap:24px; margin-bottom:40px;
-    }
-    .job-card {
-        background:#fff; border:1px solid var(--border); border-radius:16px;
-        padding:28px; transition:all 0.3s; cursor:pointer; text-decoration:none;
-        color:inherit; display:block;
-    }
-    .job-card:hover {
-        box-shadow:var(--shadow-lg); transform:translateY(-4px
+<div class="container my-5">
+    <h2 class="text-center mb-4">Latest Jobs</h2>
+    <div class="row">
+        {% for job in jobs %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card job-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ job['title'] }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ job['company_name'] }}</h6>
+                    <p class="mb-1"><i class="bi bi-geo-alt"></i> {{ job['location'] }}</p>
+                    <p class="mb-1"><i class="bi bi-briefcase"></i> {{ job['job_type'] }} | {{ job['experience'] }}</p>
+                    <p class="mb-3"><i class="bi bi-cash"></i> {{ job['salary'] }}</p>
+                    <a href="/job/{{ job['id'] }}" class="btn btn-primary btn-sm">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <p class="text-center">No jobs posted yet.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
