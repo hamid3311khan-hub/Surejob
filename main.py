@@ -6,7 +6,16 @@ from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = 'surejob-secret-key-2026-change-this-in-production'
+from flask import Flask, render_template, request, redirect, url_for, session
+from werkzeug.security import generate_password_hash, check_password_hash
+import sqlite3
+import os
 
+app = Flask(__name__)
+app.secret_key = 'surejob-super-secret-key-2026'  # <-- YE LINE ADD KAR
+
+def init_db():
+    # baaki code...
 # ==================== DATABASE SETUP ====================
 def init_db():
     conn = sqlite3.connect('surejob.db')
