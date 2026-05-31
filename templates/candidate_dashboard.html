@@ -10,6 +10,22 @@
             <h5 class="card-title">Your Profile</h5>
             <p class="mb-1"><strong>Email:</strong> {{ session.get('email') }}</p>
             <p class="mb-0"><strong>Phone:</strong> {{ session.get('phone') }}</p>
+            <hr>
+<h6>Resume</h6>
+{% if user['resume'] %}
+    <p class="text-success mb-2"><i class="bi bi-check-circle"></i> Resume uploaded</p>
+    <a href="/static/resumes/{{ user['resume'] }}" target="_blank" class="btn btn-sm btn-outline-primary">View Resume</a>
+{% else %}
+    <p class="text-muted mb-2">No resume uploaded</p>
+{% endif %}
+
+<form action="/upload-resume" method="POST" enctype="multipart/form-data" class="mt-3">
+    <div class="input-group">
+        <input type="file" class="form-control" name="resume" accept=".pdf,.doc,.docx" required>
+        <button class="btn btn-primary" type="submit">Upload</button>
+    </div>
+    <small class="text-muted">PDF, DOC, DOCX only. Max 5MB</small>
+</form>
         </div>
     </div>
 
