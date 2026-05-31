@@ -51,15 +51,43 @@ def get_db_connection():
 
 @app.route('/')
 def home():
+    try:
+        conn = get_db_connection()
+        jobs = conn.execute('''
+            SELECT jobs.*, companies.company_name 
+            FROM jobs 
+            JOIN companies ON jobs.company_id = companies.id 
+            ORDER BY jobs.id DESC LIMIT 6
+        ''').fetchall()
+        conn.close()
+        return render_template('index.html', jobs=jobs)
+    except Exception as e:
+        print(f"Error in home route: {e}")
+        return render_template('index.html', jobs=[])
+
+@app.route('/jobs')
+def jobs():
     conn = get_db_connection()
-    jobs = conn.execute('''
+    all_jobs = conn.execute('''
         SELECT jobs.*, companies.company_name 
         FROM jobs 
         JOIN companies ON jobs.company_id = companies.id 
-        ORDER BY jobs.id DESC LIMIT 6
+        ORDER BY jobs.id DESC
     ''').fetchall()
     conn.close()
-    return render_template('index.html', jobs=jobs)
+    return render_template('jobs.html', jobs=all_jobs)
+
+@app.route('/job/<int:job_id>')
+def job_detail(job_id):
+    conn = get_db_connection()
+    job = conn.execute('''
+        SELECT jobs.*, companies.company_name 
+        FROM jobs 
+        JOIN companies ON jobs.company_id = companies.id 
+        WHERE jobs.id = ?
+    ''', (job_id,)).fetchone()
+    conn.close()
+    return render_template('job_detail.html', job=job)
 
 @app.route('/candidate/register', methods=['GET', 'POST'])
 def candidate_register():
@@ -68,7 +96,6 @@ def candidate_register():
         password = request.form.get('password')
         mobile = request.form.get('mobile')
         full_name = request.form.get('full_name')
-        
         conn = get_db_connection()
         try:
             conn.execute('INSERT INTO candidates (email, password, mobile, full_name) VALUES (?, ?, ?, ?)',
