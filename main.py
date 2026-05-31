@@ -5,17 +5,30 @@ import os
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'surejob-secret-key-2026-change-this-in-production'
-from flask import Flask, render_template, request, redirect, url_for, session
-from werkzeug.security import generate_password_hash, check_password_hash
-import sqlite3
-import os
+app.secret_key = 'surejob-super-secret-key-2026'
 
-app = Flask(__name__)
-app.secret_key = 'surejob-super-secret-key-2026'  # <-- YE LINE ADD KAR
-
+# ==================== DATABASE SETUP ====================
 def init_db():
-    # baaki code...
+    conn = sqlite3.connect('surejob.db')
+    c = conn.cursor()
+    
+    # Companies Table
+    c.execute('''CREATE TABLE IF NOT EXISTS companies (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        company_name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        phone TEXT,
+        industry TEXT,
+        address TEXT,
+        description TEXT,
+        website TEXT,
+        logo TEXT,
+        founded TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+    
+    # Baaki tables ka code same rehne de...
 # ==================== DATABASE SETUP ====================
 def init_db():
     conn = sqlite3.connect('surejob.db')
