@@ -1,68 +1,58 @@
 {% extends "base.html" %}
-{% block title %}Post New Job - SureJob{% endblock %}
-
 {% block content %}
-<div class="container my-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-body p-4">
-                    <h3 class="mb-4">Post a New Job</h3>
-                    <form method="POST">
-                        <div class="mb-3">
-                            <label class="form-label">Job Title *</label>
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="text-center mb-4">Post New Job</h3>
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Job Title</label>
                             <input type="text" name="title" class="form-control" required>
                         </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Location *</label>
-                                <input type="text" name="location" class="form-control" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Job Type *</label>
-                                <select name="job_type" class="form-select" required>
-                                    <option value="">Select Type</option>
-                                    <option>Full Time</option>
-                                    <option>Part Time</option>
-                                    <option>Internship</option>
-                                    <option>Contract</option>
-                                </select>
-                            </div>
+                        <div class="col-md-6 mb-3">
+                            <label>Location</label>
+                            <input type="text" name="location" class="form-control" required>
                         </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Salary</label>
-                                <input type="text" name="salary" class="form-control" placeholder="e.g. 5-8 LPA">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Experience *</label>
-                                <input type="text" name="experience" class="form-control" placeholder="e.g. 2-5 Years" required>
-                            </div>
+                    </div>
+                    <div class="mb-3">
+                        <label>Job Description</label>
+                        <textarea name="description" class="form-control" rows="4" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label>Salary</label>
+                            <input type="text" name="salary" class="form-control">
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">No. of Openings *</label>
-                            <input type="number" name="openings" class="form-control" value="1" min="1" required>
+                        <div class="col-md-4 mb-3">
+                            <label>Job Type</label>
+                            <select name="job_type" class="form-control">
+                                <option>Full Time</option>
+                                <option>Part Time</option>
+                                <option>Internship</option>
+                            </select>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Job Description *</label>
-                            <textarea name="description" class="form-control" rows="4" required></textarea>
+                        <div class="col-md-4 mb-3">
+                            <label>Experience</label>
+                            <input type="text" name="experience" class="form-control">
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Requirements *</label>
-                            <textarea name="requirements" class="form-control" rows="4" required></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Skills Required</label>
-                            <input type="text" name="skills" class="form-control" placeholder="e.g. Python, Flask, SQL">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Perks & Benefits</label>
-                            <textarea name="perks" class="form-control" rows="3"></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Post Job</button>
-                        <a href="/company-dashboard" class="btn btn-secondary">Cancel</a>
-                    </form>
-                </div>
+                    </div>
+                    <div class="mb-3">
+                        <label>Requirements</label>
+                        <textarea name="requirements" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label>Skills</label>
+                        <input type="text" name="skills" class="form-control" placeholder="Python, Flask, SQL">
+                    </div>
+                    <div class="mb-3">
+                        <label>Perks</label>
+                        <input type="text" name="perks" class="form-control">
+                    </div>
+                    <input type="hidden" name="openings" value="1">
+                    <button type="submit" class="btn btn-primary w-100">Post Job</button>
+                </form>
             </div>
         </div>
     </div>
