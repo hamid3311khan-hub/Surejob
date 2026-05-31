@@ -1,34 +1,24 @@
 {% extends "base.html" %}
-{% block title %}SureJob - Find Your Dream Job{% endblock %}
-
 {% block content %}
-<div class="bg-primary text-white py-5">
-    <div class="container text-center">
-        <h1 class="display-4 fw-bold">Find Your Dream Job</h1>
-        <p class="lead">Search from thousands of jobs across India</p>
-        <a href="/jobs" class="btn btn-light btn-lg mt-3">Browse All Jobs</a>
-    </div>
+<div class="bg-light p-5 rounded text-center mb-4">
+    <h1>Find Your Dream Job</h1>
+    <p>Thousands of jobs waiting for you</p>
+    <a href="{{ url_for('jobs') }}" class="btn btn-primary">Browse Jobs</a>
 </div>
-
-<div class="container my-5">
-    <h2 class="text-center mb-4">Latest Jobs</h2>
-    <div class="row">
-        {% for job in jobs %}
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card job-card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">{{ job['title'] }}</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">{{ job['company_name'] }}</h6>
-                    <p class="mb-1"><i class="bi bi-geo-alt"></i> {{ job['location'] }}</p>
-                    <p class="mb-1"><i class="bi bi-briefcase"></i> {{ job['job_type'] }} | {{ job['experience'] }}</p>
-                    <p class="mb-3"><i class="bi bi-cash"></i> {{ job['salary'] }}</p>
-                    <a href="/job/{{ job['id'] }}" class="btn btn-primary btn-sm">View Details</a>
-                </div>
+<h2>Latest Jobs</h2>
+<div class="row">
+    {% for job in jobs %}
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5>{{ job.title }}</h5>
+                <p class="text-muted">{{ job.company_name }} - {{ job.location }}</p>
+                <a href="{{ url_for('job_detail', job_id=job.id) }}" class="btn btn-primary btn-sm">View</a>
             </div>
         </div>
-        {% else %}
-        <p class="text-center">No jobs posted yet.</p>
-        {% endfor %}
     </div>
+    {% else %}
+    <p>No jobs posted yet.</p>
+    {% endfor %}
 </div>
 {% endblock %}
