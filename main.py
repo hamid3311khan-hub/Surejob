@@ -324,7 +324,7 @@ def job_applications(job_id):
         FROM applications JOIN candidates ON applications.candidate_id = candidates.id
         WHERE applications.job_id =? ORDER BY applications.id DESC''', (job_id,)).fetchall()
     conn.close()
-    return render_template('job-applications.html', job=job, applications=applications)
+    return render_template('job_applications.html', job=job, applications=applications)
 
 @app.route('/company/download-resume/<int:candidate_id>')
 def download_resume(candidate_id):
