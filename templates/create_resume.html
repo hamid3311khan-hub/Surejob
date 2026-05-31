@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Create Your Resume</h2>
+    <form method="POST">
+        <div class="mb-3">
+            <label>Full Name</label>
+            <input type="text" name="full_name" class="form-control" value="{{ candidate.full_name }}" required>
+        </div>
+        <div class="mb-3">
+            <label>Email</label>
+            <input type="email" name="email" class="form-control" value="{{ candidate.email }}" required>
+        </div>
+        <div class="mb-3">
+            <label>Phone</label>
+            <input type="text" name="phone" class="form-control" value="{{ candidate.mobile }}">
+        </div>
+        <div class="mb-3">
+            <label>Location</label>
+            <input type="text" name="location" class="form-control">
+        </div>
+        <div class="mb-3">
+            <label>Professional Summary</label>
+            <textarea name="summary" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="mb-3">
+            <label>Education</label>
+            <textarea name="education" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="mb-3">
+            <label>Experience</label>
+            <textarea name="experience" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="mb-3">
+            <label>Skills</label>
+            <textarea name="skills" class="form-control" rows="2"></textarea>
+        </div>
+        <div class="mb-3">
+            <label>Projects</label>
+            <textarea name="projects" class="form-control" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Generate PDF Resume</button>
+    </form>
+</div>
+{% endblock %}
