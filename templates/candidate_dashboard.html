@@ -11,6 +11,19 @@
         <p><strong>Mobile:</strong> {{ candidate.mobile }}</p>
         <p><strong>Resume:</strong>
             {% if candidate.resume %}
+    <p><strong>Resume:</strong> <a href="{{ url_for('download_resume', candidate_id=candidate.id) }}" target="_blank">View Resume</a></p>
+{% else %}
+    <p><strong>Resume:</strong> <span class="text-danger">Not Uploaded</span></p>
+{% endif %}
+
+<form action="{{ url_for('upload_resume') }}" method="POST" enctype="multipart/form-data" class="mt-2">
+    <div class="input-group">
+        <input type="file" name="resume" class="form-control form-control-sm" accept=".pdf,.doc,.docx" required>
+        <button type="submit" class="btn btn-sm btn-success">Upload</button>
+    </div>
+    <small class="text-muted">PDF, DOC, DOCX only</small>
+                                                                       </form>
+            {% if candidate.resume %}
                 <a href="{{ url_for('download_resume', candidate_id=candidate.id) }}" target="_blank">View Resume</a>
             {% else %}
                 <span class="text-danger">Not Uploaded</span>
