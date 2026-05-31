@@ -1,55 +1,82 @@
 {% extends "base.html" %}
-{% block title %}Dashboard - SureJob{% endblock %}
+{% block title %}Candidate Dashboard - SureJob{% endblock %}
 
 {% block content %}
 <div class="container my-5">
-    <h2 class="mb-4">Welcome, {{ session.get('name') }}</h2>
-    
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <h5 class="card-title">Your Profile</h5>
-            <p class="mb-1"><strong>Email:</strong> {{ session.get('email') }}</p>
-            <p class="mb-0"><strong>Phone:</strong> {{ session.get('phone') }}</p>
-            <hr>
-<h6>Resume</h6>
-{% if user['resume'] %}
-    <p class="text-success mb-2"><i class="bi bi-check-circle"></i> Resume uploaded</p>
-    <a href="/static/resumes/{{ user['resume'] }}" target="_blank" class="btn btn-sm btn-outline-primary">View Resume</a>
-{% else %}
-    <p class="text-muted mb-2">No resume uploaded</p>
-{% endif %}
-
-<form action="/upload-resume" method="POST" enctype="multipart/form-data" class="mt-3">
-    <div class="input-group">
-        <input type="file" class="form-control" name="resume" accept=".pdf,.doc,.docx" required>
-        <button class="btn btn-primary" type="submit">Upload</button>
-    </div>
-    <small class="text-muted">PDF, DOC, DOCX only. Max 5MB</small>
-</form>
-        </div>
-    </div>
-
-    <h4 class="mb-3">Your Job Applications</h4>
     <div class="row">
-        {% for app in applications %}
-        <div class="col-md-6 mb-3">
-            <div class="card job-card">
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body text-center">
+                    <i class="bi bi-person-circle" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3">{{ candidate['full_name'] }}</h4>
+                    <p class="text-muted">{{ candidate['email'] }}</p>
+                    <p class="text-muted">{{ candidate['mobile'] }}</p>
+                </div>
+            </div>
+
+            <!-- RESUME SECTION START -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-file-earmark-person"></i> My Resume</h5>
+                </div>
                 <div class="card-body">
-                    <h5 class="card-title">{{ app['job_title'] }}</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">{{ app['company_name'] }}</h6>
-                    <p class="mb-1"><i class="bi bi-geo-alt"></i> {{ app['location'] }}</p>
-                    <span class="badge bg-{{ 'success' if app['status'] == 'Accepted' else 'warning' if app['status'] == 'Pending' else 'danger' }}">
-                        {{ app['status'] }}
-                    </span>
-                    <p class="text-muted small mt-2 mb-0">Applied on: {{ app['applied_date'] }}</p>
+                    {% if candidate['resume'] %}
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle"></i> Resume uploaded
+                        </div>
+                        <div class="d-grid gap-2">
+                            <a href="/candidate/download-resume" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-download"></i> Download Resume
+                            </a>
+                            <a href="/candidate/delete-resume" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to delete your resume?')">
+                                <i class="bi bi-trash"></i> Delete Resume
+                            </a>
+                            <a href="/candidate/create-resume" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-pencil"></i> Create New Resume
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> No resume uploaded
+                        </div>
+                        <form method="POST" action="/candidate/upload-resume" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label class="form-label">Upload Resume</label>
+                                <input type="file" name="resume" class="form-control" accept=".pdf,.doc,.docx" required>
+                                <small class="text-muted">PDF, DOC, DOCX only. Max 5MB</small>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 mb-2">
+                                <i class="bi bi-upload"></i> Upload Resume
+                            </button>
+                        </form>
+                        <div class="text-center">
+                            <span class="text-muted">OR</span>
+                        </div>
+                        <a href="/candidate/create-resume" class="btn btn-success w-100 mt-2">
+                            <i class="bi bi-file-earmark-plus"></i> Create Resume Online
+                        </a>
+                    {% endif %}
+                </div>
+            <!-- RESUME SECTION END -->
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4>Welcome to SureJob, {{ candidate['full_name'] }}!</h4>
+                    <p>
+                        {% if not candidate['resume'] %}
+                        <span class="text-danger"><i class="bi bi-exclamation-circle"></i> Upload your resume first to apply for jobs.</span>
+                        {% else %}
+                        <span class="text-success"><i class="bi bi-check-circle"></i> Your profile is complete. Start applying!</span>
+                        {% endif %}
+                    </p>
+                    <a href="/jobs" class="btn btn-primary">
+                        <i class="bi bi-search"></i> Browse Jobs
+                    </a>
                 </div>
             </div>
         </div>
-        {% else %}
-        <div class="col-12">
-            <div class="alert alert-info">You haven't applied to any jobs yet. <a href="/jobs">Browse Jobs</a></div>
-        </div>
-        {% endfor %}
     </div>
 </div>
 {% endblock %}
