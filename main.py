@@ -82,13 +82,32 @@ def home():
 
 @app.route('/jobs')
 def jobs():
+    search = request.args.get('search', '')
+    location = request.args.get('location', '')
+    job_type = request.args.get('job_type', '')
+    
     conn = get_db_connection()
-    all_jobs = conn.execute('''SELECT jobs.*, companies.company_name
-        FROM jobs JOIN companies ON jobs.company_id = companies.id
-        ORDER BY jobs.id DESC''').fetchall()
+    query = "SELECT * FROM jobs WHERE 1=1"
+    params = []
+    
+    if search:
+        query += " AND (title LIKE ? OR company_name LIKE ?)"
+        params.extend([f'%{search}%', f'%{search}%'])
+    
+    if location:
+        query += " AND location LIKE ?"
+        params.append(f'%{location}%')
+        
+    if job_type:
+        query += " AND job_type = ?"
+        params.append(job_type)
+    
+    query += " ORDER BY id DESC"
+    jobs = conn.execute(query, params).fetchall()
     conn.close()
-    return render_template('jobs.html', jobs=all_jobs)
-
+    
+    return render_template('jobs.html', jobs=jobs, search=search, location=location, job_type=job_type)
+    
 @app.route('/job/<int:job_id>')
 def job_detail(job_id):
     conn = get_db_connection()
