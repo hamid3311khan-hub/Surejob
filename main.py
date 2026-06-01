@@ -62,11 +62,11 @@ def init_db():
             FOREIGN KEY (candidate_id) REFERENCES candidates (id)
         )''')
 
-    # Auto-migration for existing DBs on Render
+    # Auto-migration: Render ke purane DB me status column add karo
     try:
         conn.execute("ALTER TABLE applications ADD COLUMN status TEXT DEFAULT 'Pending'")
     except sqlite3.OperationalError:
-        pass # Column already exists
+        pass
 
     conn.commit()
     conn.close()
