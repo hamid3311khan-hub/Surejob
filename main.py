@@ -91,8 +91,8 @@ def jobs():
     params = []
     
     if search:
-        query += " AND (title LIKE ? OR company_name LIKE ?)"
-        params.extend([f'%{search}%', f'%{search}%'])
+    query += " AND title LIKE ?"
+    params.append(f'%{search}%')
     
     if location:
         query += " AND location LIKE ?"
