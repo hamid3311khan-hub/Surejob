@@ -12,6 +12,8 @@
                 <th>Mobile</th>
                 <th>Resume</th>
                 <th>Applied On</th>
+                <th>Status</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
@@ -29,9 +31,27 @@
                     {% endif %}
                 </td>
                 <td>{{ app.applied_on.split()[0] }}</td>
+                <td>
+                    {% if app.status == 'Shortlisted' %}
+                        <span class="badge bg-success">{{ app.status }}</span>
+                    {% elif app.status == 'Rejected' %}
+                        <span class="badge bg-danger">{{ app.status }}</span>
+                    {% elif app.status == 'Hired' %}
+                        <span class="badge bg-primary">{{ app.status }}</span>
+                    {% else %}
+                        <span class="badge bg-warning">Pending</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="btn-group">
+                        <a href="/update_status/{{ app.id }}/Shortlisted" class="btn btn-success btn-sm">Shortlist</a>
+                        <a href="/update_status/{{ app.id }}/Rejected" class="btn btn-danger btn-sm">Reject</a>
+                        <a href="/update_status/{{ app.id }}/Hired" class="btn btn-primary btn-sm">Hire</a>
+                    </div>
+                </td>
             </tr>
             {% else %}
-            <tr><td colspan="5" class="text-center">No applications yet</td></tr>
+            <tr><td colspan="7" class="text-center">No applications yet</td></tr>
             {% endfor %}
         </tbody>
     </table>
