@@ -481,4 +481,10 @@ def download_resume(candidate_id):
     return redirect(request.referrer or url_for('home'))
 
 @app.route('/logout')
-def 
+def logout():
+    session.clear()
+    return redirect(url_for('home'))
+
+if __name__ == '__main__':
+    init_db()
+    app.run(debug=True)
