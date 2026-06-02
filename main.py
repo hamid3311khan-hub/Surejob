@@ -32,7 +32,6 @@ def get_db_connection():
 def init_db():
     conn = get_db_connection()
 
-    # Companies table
     conn.execute('''CREATE TABLE IF NOT EXISTS companies (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         email TEXT UNIQUE NOT NULL,
@@ -43,7 +42,6 @@ def init_db():
         bio TEXT
     )''')
 
-    # Candidates table
     conn.execute('''CREATE TABLE IF NOT EXISTS candidates (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         email TEXT UNIQUE NOT NULL,
@@ -54,7 +52,6 @@ def init_db():
         resume TEXT
     )''')
 
-    # Jobs table
     conn.execute('''CREATE TABLE IF NOT EXISTS jobs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         company_id INTEGER,
@@ -72,7 +69,6 @@ def init_db():
         FOREIGN KEY (company_id) REFERENCES companies (id)
     )''')
 
-    # Applications table
     conn.execute('''CREATE TABLE IF NOT EXISTS applications (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         job_id INTEGER,
@@ -83,7 +79,6 @@ def init_db():
         FOREIGN KEY (candidate_id) REFERENCES candidates (id)
     )''')
 
-    # Migration - add columns if missing
     try:
         conn.execute('ALTER TABLE companies ADD COLUMN logo TEXT')
     except:
@@ -104,7 +99,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-# DB init on startup
 init_db()
 
 @app.route('/')
@@ -479,4 +473,11 @@ def download_resume(candidate_id):
     flash('Resume not found', 'danger')
     return redirect(request.referrer or url_for('home'))
 
-@app.route('/l
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('home'))
+
+if __name__ == '__main__':
+    init_db()
+    app.run(debug=True)
