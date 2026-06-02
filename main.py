@@ -144,14 +144,21 @@ def jobs():
 @app.route('/job/<int:job_id>')
 def job_detail(job_id):
     conn = get_db_connection()
-    job = conn.execute('''SELECT jobs.*, companies.company_name, companies.logo
+    job = conn.execute('''SELECT jobs.*, companies.company_name, companies.logo, companies.bio
         FROM jobs JOIN companies ON jobs.company_id = companies.id
         WHERE jobs.id =?''', (job_id,)).fetchone()
+
+    if not job:
+        flash('Job not found', 'danger')
+        conn.close()
+        return redirect(url_for('jobs'))
+
     already_applied = False
     if 'user_id' in session and session['user_type'] == 'candidate':
         check = conn.execute('SELECT id FROM applications WHERE job_id =? AND candidate_id =?',
                            (job_id, session['user_id'])).fetchone()
         already_applied = True if check else False
+
     conn.close()
     return render_template('job_detail.html', job=job, already_applied=already_applied)
 
@@ -474,10 +481,4 @@ def download_resume(candidate_id):
     return redirect(request.referrer or url_for('home'))
 
 @app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('home'))
-
-if __name__ == '__main__':
-    init_db()
-    app.run(debug=True)
+def 
