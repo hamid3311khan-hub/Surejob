@@ -23,19 +23,30 @@
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label>Salary</label>
-                            <input type="text" name="salary" class="form-control">
+                            <input type="text" name="salary" class="form-control" placeholder="₹5-8 LPA">
                         </div>
                         <div class="col-md-4 mb-3">
                             <label>Job Type</label>
-                            <select name="job_type" class="form-control">
-                                <option>Full Time</option>
-                                <option>Part Time</option>
-                                <option>Internship</option>
+                            <select name="job_type" class="form-select" required>
+                                <option value="Full-time">Full-time</option>
+                                <option value="Part-time">Part-time</option>
+                                <option value="Internship">Internship</option>
+                                <option value="Remote">Remote</option>
                             </select>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label>Experience</label>
-                            <input type="text" name="experience" class="form-control">
+                            <input type="text" name="experience" class="form-control" placeholder="2-3 Years">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Openings</label>
+                            <input type="number" name="openings" class="form-control" value="1" min="1">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>Skills</label>
+                            <input type="text" name="skills" class="form-control" placeholder="Python, Flask, SQL">
                         </div>
                     </div>
                     <div class="mb-3">
@@ -43,14 +54,9 @@
                         <textarea name="requirements" class="form-control" rows="3"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label>Skills</label>
-                        <input type="text" name="skills" class="form-control" placeholder="Python, Flask, SQL">
-                    </div>
-                    <div class="mb-3">
                         <label>Perks</label>
-                        <input type="text" name="perks" class="form-control">
+                        <input type="text" name="perks" class="form-control" placeholder="Health Insurance, Flexible Hours">
                     </div>
-                    <input type="hidden" name="openings" value="1">
                     <button type="submit" class="btn btn-primary w-100">Post Job</button>
                 </form>
             </div>
