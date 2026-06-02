@@ -110,8 +110,8 @@ def jobs():
         params.append(f'%{location}%')
 
     if job_type:
-    query += " AND jobs.job_type LIKE ?"
-    params.append(f'%{job_type}%')
+        query += " AND jobs.job_type LIKE?"
+        params.append(f'%{job_type}%')
 
     query += " ORDER BY jobs.id DESC"
     jobs = conn.execute(query, params).fetchall()
