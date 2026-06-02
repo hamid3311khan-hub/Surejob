@@ -10,9 +10,9 @@ app = Flask(__name__)
 app.secret_key = 'surejob_secret_key_123'
 
 UPLOAD_FOLDER = 'static/resumes'
-LOGO_FOLDER = 'static/logos' # Feature 3 ke liye
+LOGO_FOLDER = 'static/logos'
 ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx'}
-ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg'} # Feature 3
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['LOGO_FOLDER'] = LOGO_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -24,11 +24,14 @@ def allowed_file(filename):
 def allowed_image(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
 
-def init_db():
+def get_db_connection():
+    conn = sqlite3.connect('careerjob.db')
+    conn.row_factory = sqlite3.Row
+    return conn
 
 def init_db():
     conn = get_db_connection()
-    
+
     # Companies table
     conn.execute('''CREATE TABLE IF NOT EXISTS companies (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,17 +42,18 @@ def init_db():
         logo TEXT,
         bio TEXT
     )''')
-    
+
     # Candidates table
     conn.execute('''CREATE TABLE IF NOT EXISTS candidates (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         email TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
-        name TEXT NOT NULL,
+        name TEXT,
+        full_name TEXT,
         mobile TEXT,
         resume TEXT
     )''')
-    
+
     # Jobs table
     conn.execute('''CREATE TABLE IF NOT EXISTS jobs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,7 +71,7 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (company_id) REFERENCES companies (id)
     )''')
-    
+
     # Applications table
     conn.execute('''CREATE TABLE IF NOT EXISTS applications (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -79,26 +83,30 @@ def init_db():
         FOREIGN KEY (candidate_id) REFERENCES candidates (id)
     )''')
 
-    # Purane DB me columns add karo agar nahi hain
+    # Migration - add columns if missing
     try:
         conn.execute('ALTER TABLE companies ADD COLUMN logo TEXT')
-    except: 
-        pass  # Column already exists
+    except:
+        pass
     try:
         conn.execute('ALTER TABLE companies ADD COLUMN bio TEXT')
-    except: 
+    except:
         pass
     try:
         conn.execute('ALTER TABLE applications ADD COLUMN status TEXT DEFAULT "Pending"')
-    except: 
+    except:
         pass
-    
+    try:
+        conn.execute('ALTER TABLE candidates ADD COLUMN full_name TEXT')
+    except:
+        pass
+
     conn.commit()
     conn.close()
-    
-    # logos folder banao agar nahi hai
-    if not os.path.exists('static/logos'):
-        os.makedirs('static/logos')
+
+# DB init on startup
+init_db()
+
 @app.route('/')
 def home():
     conn = get_db_connection()
@@ -162,7 +170,7 @@ def apply_job(job_id):
     if not candidate['resume']:
         flash('Please upload your resume before applying', 'warning')
         conn.close()
-        return redirect(url_for('candidate_dashboard'))
+        return redirect(url_for('dashboard'))
     existing = conn.execute('SELECT id FROM applications WHERE job_id =? AND candidate_id =?',
                           (job_id, session['user_id'])).fetchone()
     if existing:
@@ -215,12 +223,11 @@ def candidate_login():
             session['user_id'] = user['id']
             session['user_type'] = 'candidate'
             session['name'] = user['full_name'] if user['full_name'] else user['email'].split('@')[0]
-            return redirect(url_for('dashboard')) # FIXED: /dashboard pe bhejo
+            return redirect(url_for('dashboard'))
         else:
             flash('Invalid email or password', 'danger')
     return render_template('candidate_login.html')
 
-# FIXED: Central dashboard route
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
@@ -248,7 +255,7 @@ def dashboard():
 
 @app.route('/candidate/dashboard')
 def candidate_dashboard():
-    return redirect(url_for('dashboard')) # FIXED: redirect to central route
+    return redirect(url_for('dashboard'))
 
 @app.route('/candidate/create-resume', methods=['GET', 'POST'])
 def create_resume():
@@ -256,7 +263,6 @@ def create_resume():
         return redirect(url_for('candidate_login'))
 
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
     conn = get_db_connection()
     candidate = conn.execute('SELECT * FROM candidates WHERE id =?', (session['user_id'],)).fetchone()
 
@@ -265,17 +271,14 @@ def create_resume():
             buffer = io.BytesIO()
             p = canvas.Canvas(buffer, pagesize=letter)
             width, height = letter
-
             full_name = request.form.get('full_name') or 'Candidate'
             email = request.form.get('email') or ''
             phone = request.form.get('phone') or ''
-
             p.setFont("Helvetica-Bold", 16)
             p.drawString(50, height - 50, full_name)
             p.setFont("Helvetica", 10)
             p.drawString(50, height - 70, f"Email: {email} | Phone: {phone}")
             y = height - 120
-
             sections = [("Summary", request.form.get('summary')), ("Education", request.form.get('education')),
                         ("Experience", request.form.get('experience')), ("Skills", request.form.get('skills'))]
             for title, content in sections:
@@ -366,16 +369,15 @@ def company_login():
             session['user_id'] = user['id']
             session['user_type'] = 'company'
             session['name'] = user['company_name']
-            return redirect(url_for('dashboard')) # FIXED
+            return redirect(url_for('dashboard'))
         else:
             flash('Invalid email or password', 'danger')
     return render_template('company_login.html')
 
 @app.route('/company/dashboard')
 def company_dashboard():
-    return redirect(url_for('dashboard')) # FIXED
+    return redirect(url_for('dashboard'))
 
-# Feature 3: Company Profile
 @app.route('/company/profile', methods=['GET', 'POST'])
 def company_profile():
     if 'user_id' not in session or session['user_type']!= 'company':
@@ -409,14 +411,14 @@ def company_profile():
 
 @app.route('/post-job', methods=['GET', 'POST'])
 def post_job():
-    if 'user_id' not in session or session['user_type']!= 'company': # SECURITY FIX
+    if 'user_id' not in session or session['user_type']!= 'company':
         flash('Only companies can post jobs', 'danger')
         return redirect(url_for('dashboard'))
     if request.method == 'POST':
         conn = get_db_connection()
         conn.execute('''INSERT INTO jobs (title, description, location, salary, job_type, experience,
                             openings, requirements, skills, perks, company_id)
-            VALUES (?,?,?,?,?,?,?)''', (
+            VALUES (?,?,?,?,?,?,?,?,?,?,?)''', (
             request.form.get('title'), request.form.get('description'), request.form.get('location'),
             request.form.get('salary'), request.form.get('job_type'), request.form.get('experience'),
             request.form.get('openings'), request.form.get('requirements'), request.form.get('skills'),
@@ -466,7 +468,7 @@ def update_status(app_id, status):
 
 @app.route('/company/download-resume/<int:candidate_id>')
 def download_resume(candidate_id):
-    if 'user_id' not in session: 
+    if 'user_id' not in session:
         return redirect(url_for('candidate_login'))
     conn = get_db_connection()
     candidate = conn.execute('SELECT resume FROM candidates WHERE id =?', (candidate_id,)).fetchone()
@@ -476,3 +478,5 @@ def download_resume(candidate_id):
                                  as_attachment=request.args.get('download') == '1')
     flash('Resume not found', 'danger')
     return redirect(request.referrer or url_for('home'))
+
+@app.route('/l
