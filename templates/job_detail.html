@@ -1,88 +1,48 @@
 {% extends "base.html" %}
+{% block title %}{{ job.title }} - SureJob Pro{% endblock %}
 {% block content %}
-<div class="container mt-4">
-    <div class="card">
-        <div class="card-body">
-            {% if job.logo %}
-            <img src="{{ url_for('static', filename='logos/' + job.logo) }}" width="80" class="mb-3 rounded">
-            {% endif %}
-
-            <h2>{{ job.title }}</h2>
-            <h5 class="text-muted">{{ job.company_name }}</h5>
-
-            {% if job.created_at %}
-            <p class="text-muted"><small>Posted on {{ job.created_at.split()[0] }}</small></p>
-            {% endif %}
-
-            <hr>
-
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <strong>Location:</strong> {{ job.location or 'Not specified' }}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2>{{ job.title }}</h2>
+                <h5 class="text-muted mb-3"><i class="bi bi-building"></i> {{ job.company_name }}</h5>
+                <hr>
+                <div class="row mb-3">
+                    <div class="col-md-6"><i class="bi bi-geo-alt text-primary"></i> <strong>Location:</strong> {{ job.location }}</div>
+                    <div class="col-md-6"><i class="bi bi-cash text-success"></i> <strong>Salary:</strong> {{ job.salary }}</div>
                 </div>
-                <div class="col-md-6">
-                    <strong>Salary:</strong> {{ job.salary or 'Not disclosed' }}
+                <div class="row mb-3">
+                    <div class="col-md-6"><i class="bi bi-briefcase text-info"></i> <strong>Type:</strong> {{ job.job_type }}</div>
+                    <div class="col-md-6"><i class="bi bi-clock text-warning"></i> <strong>Experience:</strong> {{ job.experience_required or 'Any' }}</div>
                 </div>
+                <p><i class="bi bi-tools text-danger"></i> <strong>Skills Required:</strong> {{ job.skills_required or 'Not specified' }}</p>
+                <hr>
+                <h5>Job Description</h5>
+                <p style="white-space: pre-line;">{{ job.description }}</p>
+                <hr>
+                <p class="text-muted small">Posted on: {{ job.created_at[:10] }}</p>
             </div>
-
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <strong>Job Type:</strong> {{ job.job_type or 'Full Time' }}
-                </div>
-                <div class="col-md-6">
-                    <strong>Experience:</strong> {{ job.experience or 'Any' }}
-                </div>
-            </div>
-
-            {% if job.openings %}
-            <p><strong>Openings:</strong> {{ job.openings }}</p>
-            {% endif %}
-
-            <div class="mb-3">
-                <strong>Description:</strong>
-                <p>{{ job.description or 'No description available' }}</p>
-            </div>
-
-            {% if job.requirements %}
-            <div class="mb-3">
-                <strong>Requirements:</strong>
-                <p>{{ job.requirements }}</p>
-            </div>
-            {% endif %}
-
-            {% if job.skills %}
-            <div class="mb-3">
-                <strong>Skills:</strong>
-                <p>{{ job.skills }}</p>
-            </div>
-            {% endif %}
-
-            {% if job.perks %}
-            <div class="mb-3">
-                <strong>Perks & Benefits:</strong>
-                <p>{{ job.perks }}</p>
-            </div>
-            {% endif %}
-
-            {% if job.bio %}
-            <div class="mb-3">
-                <strong>About Company:</strong>
-                <p>{{ job.bio }}</p>
-            </div>
-            {% endif %}
-
-            <hr>
-
-            {% if session.user_type == 'candidate' %}
-                {% if already_applied %}
-                    <button class="btn btn-secondary" disabled>Already Applied</button>
-                {% else %}
-                    <a href="{{ url_for('apply_job', job_id=job.id) }}" class="btn btn-primary">Apply Now</a>
-                {% endif %}
-            {% elif not session.user_id %}
-                <a href="{{ url_for('candidate_login') }}" class="btn btn-primary">Login to Apply</a>
-            {% endif %}
         </div>
     </div>
-</div>
-{% endblock %}
+    <div class="col-md-4">
+        <div class="card shadow-sm sticky-top" style="top: 20px;">
+            <div class="card-body text-center">
+                <h5 class="mb-3">Apply for this Job</h5>
+                {% if session.user_id and session.role == 'candidate' %}
+                    {% if applied %}
+                        <button class="btn btn-success w-100 mb-2" disabled><i class="bi bi-check-circle"></i> Already Applied</button>
+                    {% else %}
+                        <form action="{{ url_for('job.apply_job', job_id=job.id) }}" method="POST">
+                            <button type="submit" class="btn btn-primary w-100 mb-2"><i class="bi bi-send"></i> Apply Now</button>
+                        </form>
+                    {% endif %}
+                    <form action="{{ url_for('job.save_job', job_id=job.id) }}" method="POST">
+                        <button type="submit" class="btn btn-{% if saved %}warning{% else %}outline-warning{% endif %} w-100">
+                            <i class="bi bi-bookmark-{% if saved %}fill{% else %}heart{% endif %}"></i> {% if saved %}Saved{% else %}Save Job{% endif %}
+                        </button>
+                    </form>
+                {% elif not session.user_id %}
+                    <a href="{{ url_for('candidate_login') }}" class="btn btn-primary w-100 mb-2">Login to Apply</a>
+                    <a href="{{ url_for('candidate_register') }}" class="btn btn-outline-primary w-100">New User? Register</a>
+                {% else
