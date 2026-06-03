@@ -1,30 +1,27 @@
 {% extends "base.html" %}
-{% block title %}Companies - SureJob{% endblock %}
-
+{% block title %}Company Info{% endblock %}
 {% block content %}
-<div class="container my-5">
-    <h2 class="text-center mb-4">Top Companies Hiring</h2>
-    <div class="row">
-        {% for company in companies %}
-        <div class="col-md-4 mb-4">
-            <div class="card job-card h-100 text-center">
+<div class="text-center py-5">
+    <h2>SureJob Pro for Companies</h2>
+    <p class="fs-5 text-muted">Hire top talent in minutes. Shine style candidate search available.</p>
+    <div class="row justify-content-center mt-4">
+        <div class="col-md-8">
+            <div class="card shadow">
                 <div class="card-body">
-                    <div class="mb-3">
-                        <i class="bi bi-building" style="font-size: 3rem; color: #2563eb;"></i>
+                    <h4>Why Choose SureJob Pro?</h4>
+                    <ul class="list-unstyled text-start mt-3">
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Post unlimited jobs for free</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Advanced candidate search with filters</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Manage applications easily</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Shortlist & schedule interviews</li>
+                    </ul>
+                    <div class="mt-4">
+                        <a href="{{ url_for('company_register') }}" class="btn btn-success btn-lg me-2">Register Company</a>
+                        <a href="{{ url_for('company_login') }}" class="btn btn-outline-success btn-lg">Company Login</a>
                     </div>
-                    <h5 class="card-title">{{ company['company_name'] }}</h5>
-                    <p class="text-muted">{{ company['total_jobs'] }} Jobs Open</p>
-                    {% if company['website'] %}
-                    <a href="{{ company['website'] }}" target="_blank" class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-globe"></i> Website
-                    </a>
-                    {% endif %}
                 </div>
             </div>
         </div>
-        {% else %}
-        <p class="text-center">No companies registered yet.</p>
-        {% endfor %}
     </div>
 </div>
 {% endblock %}
