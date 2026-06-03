@@ -58,6 +58,10 @@ def init_db():
             db.commit()
         except: pass
 
+# DB BANAYEGA RENDER PE
+with app.app_context():
+    init_db()
+
 @app.route('/')
 def index():
     db = get_db()
@@ -135,5 +139,4 @@ def logout():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    init_db()
     app.run(debug=True)
