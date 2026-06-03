@@ -3,47 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SureJob</title>
+    <title>{% block title %}SureJob Pro{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-        <div class="container">
-            <a class="navbar-brand text-primary fw-bold" href="{{ url_for('index') }}">SureJob</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <div class="navbar-nav ms-auto">
-                    {% if session.user_id %}
-                        {% if session.role == 'candidate' %}
-                            <a class="nav-link" href="{{ url_for('candidate_dashboard') }}">Dashboard</a>
-                        {% elif session.role == 'company' %}
-                            <a class="nav-link" href="{{ url_for('company_dashboard') }}">Dashboard</a>
-                        {% endif %}
-                        <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
-                    {% else %}
-                        <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">SureJob Pro</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="navbar-nav me-auto">
+                <a class="nav-link" href="{{ url_for('job.jobs') }}">Browse Jobs</a>
+            </div>
+            <div class="navbar-nav">
+                {% if session.user_id %}
+                    {% if session.role == 'candidate' %}
+                        <a class="nav-link" href="{{ url_for('column.candidate_dashboard') }}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                    {% elif session.role == 'company' %}
+                        <a class="nav-link" href="{{ url_for('column.company_dashboard') }}"><i class="bi bi-building"></i> Dashboard</a>
+                        <a class="nav-link" href="{{ url_for('column.search_candidates') }}"><i class="bi bi-search"></i> Find Candidates</a>
+                        <a class="nav-link" href="{{ url_for('job.post_job') }}"><i class="bi bi-plus-circle"></i> Post Job</a>
+                    {% elif session.role == 'admin' %}
+                        <a class="nav-link" href="{{ url_for('column.admin_dashboard') }}"><i class="bi bi-shield-check"></i> Admin</a>
                     {% endif %}
-                </div>
+                    <a class="nav-link" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a>
+                {% else %}
+                    <a class="nav-link" href="{{ url_for('candidate_login') }}">Candidate Login</a>
+                    <a class="nav-link" href="{{ url_for('company_login') }}">Company Login</a>
+                    <a class="nav-link btn btn-primary text-white ms-2" href="{{ url_for('candidate_register') }}">Register</a>
+                {% endif %}
             </div>
         </div>
-    </nav>
-
-    <div class="container mt-4">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-        {% block content %}{% endblock %}
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</nav>
+
+<div class="container mt-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+</div>
+
+<footer class="bg-dark text-white text-center py-3 mt-5">
+    <p class="mb-0">&copy; 2026 SureJob Pro. All rights reserved.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
