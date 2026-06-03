@@ -1,45 +1,29 @@
 {% extends "base.html" %}
+{% block title %}Company Dashboard{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <div class="d-flex align-items-center">
-        {% if company.logo %}
-            <img src="{{ url_for('static', filename='logos/' + company.logo) }}" alt="Logo" class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;">
-        {% else %}
-            <div class="rounded-circle bg-secondary me-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                <i class="fas fa-building text-white"></i>
-            </div>
-        {% endif %}
-        <div>
-            <h3 class="mb-0">{{ session.name }} Dashboard</h3>
-            <small class="text-muted">{{ company.email }}</small>
-        </div>
-    </div>
+    <h2>{{ session.name }} Dashboard</h2>
     <div>
-        <a href="{{ url_for('company_profile') }}" class="btn btn-outline-secondary me-2">Edit Profile</a>
-        <a href="{{ url_for('post_job') }}" class="btn btn-primary">+ Post New Job</a>
+        <a href="{{ url_for('column.search_candidates') }}" class="btn btn-success"><i class="bi bi-search"></i> Find Candidates</a>
+        <a href="{{ url_for('job.post_job') }}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Post New Job</a>
+        <a href="{{ url_for('column.company_profile') }}" class="btn btn-outline-secondary"><i class="bi bi-building"></i> Profile</a>
     </div>
 </div>
-
-{% if company.bio %}
-<div class="alert alert-light border mb-4">
-    <strong>About:</strong> {{ company.bio }}
-</div>
-{% endif %}
 
 <div class="row mb-4">
-    <div class="col-md-6 mb-3">
-        <div class="card bg-primary text-white">
-            <div class="card-body text-center">
-                <h2>{{ total_jobs }}</h2>
+    <div class="col-md-6">
+        <div class="card text-center bg-light">
+            <div class="card-body">
+                <h3>{{ jobs|length }}</h3>
                 <p class="mb-0">Total Jobs Posted</p>
             </div>
         </div>
     </div>
-    <div class="col-md-6 mb-3">
-        <div class="card bg-success text-white">
-            <div class="card-body text-center">
-                <h2>{{ total_apps }}</h2>
-                <p class="mb-0">Total Applications</p>
+    <div class="col-md-6">
+        <div class="card text-center bg-light">
+            <div class="card-body">
+                <h3>{{ total_applications }}</h3>
+                <p class="mb-0">Total Applications Received</p>
             </div>
         </div>
     </div>
@@ -48,42 +32,24 @@
 <h4>Your Posted Jobs</h4>
 <div class="table-responsive">
     <table class="table table-hover">
-        <thead>
-            <tr>
-                <th>Job Title</th>
-                <th>Location</th>
-                <th>Type</th>
-                <th>Applications</th>
-                <th>Posted Date</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
+        <thead><tr><th>Job Title</th><th>Location</th><th>Type</th><th>Posted On</th><th>Actions</th></tr></thead>
         <tbody>
             {% for job in jobs %}
             <tr>
-                <td><strong>{{ job.title }}</strong></td>
+                <td>{{ job.title }}</td>
                 <td>{{ job.location }}</td>
-                <td><span class="badge bg-info">{{ job.job_type }}</span></td>
+                <td>{{ job.job_type }}</td>
+                <td>{{ job.created_at[:10] }}</td>
                 <td>
-                    <a href="{{ url_for('job_applications', job_id=job.id) }}" class="btn btn-primary btn-sm">
-                        View <span class="badge bg-light text-dark">{{ job.app_count if job.app_count else 0 }}</span>
-                    </a>
-                </td>
-                <td>{{ job.created_at.split()[0] if job.created_at else '' }}</td>
-                <td>
-                    <a href="{{ url_for('job_bp.edit_job', job_id=job.id) }}"
-                       class="btn btn-warning btn-sm me-1">
-                        <i class="fas fa-edit"></i> Edit
-                    </a>
-                    <a href="{{ url_for('job_bp.delete_job', job_id=job.id) }}"
-                       class="btn btn-danger btn-sm"
-                       onclick="return confirm('Delete {{ job.title }}? This cannot be undone.')">
-                        <i class="fas fa-trash"></i> Delete
-                    </a>
+                    <a href="{{ url_for('column.job_applications', job_id=job.id) }}" class="btn btn-sm btn-info">Applications</a>
+                    <a href="{{ url_for('job.edit_job', job_id=job.id) }}" class="btn btn-sm btn-warning">Edit</a>
+                    <form action="{{ url_for('job.delete_job', job_id=job.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this job?');">
+                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                    </form>
                 </td>
             </tr>
             {% else %}
-            <tr><td colspan="6" class="text-center py-4">No jobs posted yet</td></tr>
+            <tr><td colspan="5" class="text-center">No jobs posted yet. <a href="{{ url_for('job.post_job') }}">Post your first job</a></td></tr>
             {% endfor %}
         </tbody>
     </table>
