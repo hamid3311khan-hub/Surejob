@@ -1,60 +1,40 @@
 {% extends "base.html" %}
+{% block title %}Applications - {{ job.title }}{% endblock %}
 {% block content %}
-<h3>Applications for: {{ job.title }}</h3>
-<p class="text-muted">{{ job.location }} | {{ job.job_type }}</p>
-<hr>
+<h2>Applications for: {{ job.title }}</h2>
+<p class="text-muted">{{ job.location }} | {{ job.job_type }} | {{ job.salary }}</p>
+
 <div class="table-responsive">
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Candidate Name</th>
-                <th>Email</th>
-                <th>Mobile</th>
-                <th>Resume</th>
-                <th>Applied On</th>
-                <th>Status</th>
-                <th>Action</th>
-            </tr>
-        </thead>
+    <table class="table table-hover">
+        <thead><tr><th>Candidate</th><th>Contact</th><th>Skills</th><th>Experience</th><th>Education</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody>
             {% for app in applications %}
             <tr>
-                <td>{{ app.full_name }}</td>
-                <td>{{ app.email }}</td>
-                <td>{{ app.mobile }}</td>
+                <td><strong>{{ app.name }}</strong><br><small class="text-muted">{{ app.about[:50] if app.about else '' }}</small></td>
+                <td>{{ app.email }}<br>{{ app.phone or '-' }}</td>
+                <td>{{ app.skills or '-' }}</td>
+                <td>{{ app.experience or '-' }}</td>
+                <td>{{ app.education or '-' }}</td>
+                <td><span class="badge bg-{% if app.status=='Shortlisted' %}success{% elif app.status=='Rejected' %}danger{% else %}primary{% endif %}">{{ app.status }}</span></td>
                 <td>
-                    {% if app.resume %}
-                        <a href="{{ url_for('download_resume', candidate_id=app.candidate_id) }}" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
-                        <a href="{{ url_for('download_resume', candidate_id=app.candidate_id, download=1) }}" class="btn btn-sm btn-outline-success">Download</a>
-                    {% else %}
-                        <span class="text-danger">No Resume</span>
-                    {% endif %}
-                </td>
-                <td>{{ app.applied_on.split()[0] }}</td>
-                <td>
-                    {% if app.status == 'Shortlisted' %}
-                        <span class="badge bg-success">{{ app.status }}</span>
-                    {% elif app.status == 'Rejected' %}
-                        <span class="badge bg-danger">{{ app.status }}</span>
-                    {% elif app.status == 'Hired' %}
-                        <span class="badge bg-primary">{{ app.status }}</span>
-                    {% else %}
-                        <span class="badge bg-warning">Pending</span>
-                    {% endif %}
-                </td>
-                <td>
-                    <div class="btn-group">
-                        <a href="/update_status/{{ app.id }}/Shortlisted" class="btn btn-success btn-sm">Shortlist</a>
-                        <a href="/update_status/{{ app.id }}/Rejected" class="btn btn-danger btn-sm">Reject</a>
-                        <a href="/update_status/{{ app.id }}/Hired" class="btn btn-primary btn-sm">Hire</a>
-                    </div>
+                    <form action="{{ url_for('column.update_application_status', app_id=app.id) }}" method="POST">
+                        <div class="d-flex gap-1">
+                            <select name="status" class="form-select form-select-sm" style="width: 110px;">
+                                <option value="Applied" {% if app.status=='Applied' %}selected{% endif %}>Applied</option>
+                                <option value="Shortlisted" {% if app.status=='Shortlisted' %}selected{% endif %}>Shortlist</option>
+                                <option value="Rejected" {% if app.status=='Rejected' %}selected{% endif %}>Reject</option>
+                            </select>
+                            <input type="date" name="interview_date" class="form-control form-control-sm" style="width: 120px;" value="{{ app.interview_date or '' }}">
+                            <button type="submit" class="btn btn-sm btn-success">Update</button>
+                        </div>
+                    </form>
                 </td>
             </tr>
             {% else %}
-            <tr><td colspan="7" class="text-center">No applications yet</td></tr>
+            <tr><td colspan="7" class="text-center">No applications yet for this job.</td></tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
-<a href="{{ url_for('company_dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+<a href="{{ url_for('column.company_dashboard') }}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
 {% endblock %}
