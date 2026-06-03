@@ -1,73 +1,66 @@
 {% extends "base.html" %}
-{% block title %}Admin Panel - SureJob{% endblock %}
-
+{% block title %}Admin Dashboard{% endblock %}
 {% block content %}
-<div class="container my-5">
-    <h2 class="mb-4">Admin Dashboard</h2>
-    
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card text-center bg-primary text-white">
-                <div class="card-body">
-                    <h3>{{ total_candidates }}</h3>
-                    <p class="mb-0">Candidates</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center bg-success text-white">
-                <div class="card-body">
-                    <h3>{{ total_companies }}</h3>
-                    <p class="mb-0">Companies</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center bg-info text-white">
-                <div class="card-body">
-                    <h3>{{ total_jobs }}</h3>
-                    <p class="mb-0">Total Jobs</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center bg-warning text-white">
-                <div class="card-body">
-                    <h3>{{ total_applications }}</h3>
-                    <p class="mb-0">Applications</p>
-                </div>
-            </div>
+<h2>Admin Dashboard</h2>
+
+<div class="row mb-4">
+    <div class="col-md-2"><div class="card text-center"><div class="card-body"><h4>{{ stats.total_users }}</h4><p class="mb-0 small">Total Users</p></div></div></div>
+    <div class="col-md-2"><div class="card text-center"><div class="card-body"><h4>{{ stats.total_companies }}</h4><p class="mb-0 small">Companies</p></div></div></div>
+    <div class="col-md-2"><div class="card text-center"><div class="card-body"><h4>{{ stats.total_candidates }}</h4><p class="mb-0 small">Candidates</p></div></div></div>
+    <div class="col-md-3"><div class="card text-center"><div class="card-body"><h4>{{ stats.total_jobs }}</h4><p class="mb-0 small">Total Jobs</p></div></div></div>
+    <div class="col-md-3"><div class="card text-center"><div class="card-body"><h4>{{ stats.total_applications }}</h4><p class="mb-0 small">Applications</p></div></div></div>
+</div>
+
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#jobs">All Jobs</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#users">All Users</a></li>
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane fade show active" id="jobs">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover">
+                <thead><tr><th>Title</th><th>Company</th><th>Location</th><th>Posted</th><th>Action</th></tr></thead>
+                <tbody>
+                    {% for job in jobs %}
+                    <tr>
+                        <td>{{ job.title }}</td>
+                        <td>{{ job.company_name }}</td>
+                        <td>{{ job.location }}</td>
+                        <td>{{ job.created_at[:10] }}</td>
+                        <td>
+                            <form action="{{ url_for('column.admin_delete_job', job_id=job.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this job?');">
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
-
-    <h4 class="mb-3">All Jobs</h4>
-    <div class="table-responsive">
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Job Title</th>
-                    <th>Company</th>
-                    <th>Location</th>
-                    <th>Posted Date</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for job in all_jobs %}
-                <tr>
-                    <td>{{ job['id'] }}</td>
-                    <td>{{ job['title'] }}</td>
-                    <td>{{ job['company_name'] }}</td>
-                    <td>{{ job['location'] }}</td>
-                    <td>{{ job['posted_date'] }}</td>
-                    <td>
-                        <a href="/admin-delete-job/{{ job['id'] }}" class="btn btn-sm btn-danger" onclick="return confirm('Delete this job?')">Delete</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="tab-pane fade" id="users">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover">
+                <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Location</th><th>Joined</th><th>Action</th></tr></thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.name }}</td>
+                        <td>{{ user.email }}</td>
+                        <td><span class="badge bg-secondary">{{ user.role }}</span></td>
+                        <td>{{ user.location or '-' }}</td>
+                        <td>{{ user.created_at[:10] }}</td>
+                        <td>
+                            <form action="{{ url_for('column.admin_delete_user', user_id=user.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this user?');">
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}
