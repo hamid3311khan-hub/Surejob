@@ -43,6 +43,8 @@
                         </button>
                     </form>
                 {% elif not session.user_id %}
-                    <a href="{{ url_for('candidate_login') }}" class="btn btn-primary w-100 mb-2">Login to Apply</a>
-                    <a href="{{ url_for('candidate_register') }}" class="btn btn-outline-primary w-100">New User? Register</a>
-                {% else
+    <a href="{{ url_for('candidate_login') }}" class="btn btn-primary w-100 mb-2">Login to Apply</a>
+    <a href="{{ url_for('candidate_register') }}" class="btn btn-outline-primary w-100">New User? Register</a>
+{% else %}
+    <a href="#" class="btn btn-secondary w-100 mb-2 disabled">Already Applied</a>
+{% endif %}
