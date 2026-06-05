@@ -137,6 +137,25 @@ def logout():
     session.clear()
     flash('Logged out successfully', 'success')
     return redirect(url_for('index'))
-
+# app.py me add kar de
+@app.route('/admin-rahul-123')  # Ye secret URL hai, kisi ko mat batana
+def admin_panel():
+    companies = Company.query.all()
+    students = Student.query.all()
+    jobs = Job.query.all()
+    
+    return f'''
+    <h1>Admin Panel</h1>
+    <h2>Companies: {len(companies)}</h2>
+    {'<br>'.join([f'ID: {c.id} | {c.name} | {c.email} | Pass: {c.password}' for c in companies])}
+    
+    <h2>Students: {len(students)}</h2>
+    {len(students)} registered
+    
+    <h2>Jobs: {len(jobs)}</h2>
+    {len(jobs)} posted
+    <br><br>
+    <b>Note:</b> Ye temporary admin hai. Baad me proper bana denge.
+    '''
 if __name__ == '__main__':
     app.run(debug=True)
