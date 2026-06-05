@@ -68,7 +68,7 @@ with app.app_context():
 def index():
     db = get_db()
     c = db.cursor()
-    c.execute("SELECT j.*, u.name as company_name FROM jobs j JOIN users u ON j.company_id = u.id ORDER BY j.created_at DESC LIMIT 8")
+    c.execute("SELECT j.*, u.name as company_name FROM jobs j JOIN users u ON j.company_id = u.id ORDER BY j.id DESC LIMIT 8")
     jobs = c.fetchall()
     c.close()
     return render_template('index.html', jobs=jobs)
@@ -99,7 +99,7 @@ def company_register():
         db = get_db()
         c = db.cursor()
         try:
-            c.execute("INSERT INTO users (name, email, password, role, location, phone, about) VALUES (%s,%s,%s,%s,%s)",
+            c.execute("INSERT INTO users (name, email, password, role, location, phone, about) VALUES (%s,%s,%s)",
                       (request.form['name'], request.form['email'], generate_password_hash(request.form['password']),
                        'company', request.form.get('location',''), request.form.get('phone',''), request.form.get('about','')))
             db.commit()
