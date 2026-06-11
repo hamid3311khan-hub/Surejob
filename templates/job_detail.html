@@ -21,7 +21,7 @@
                 <h5>Job Description</h5>
                 <p style="white-space: pre-line;">{{ job.description }}</p>
                 <hr>
-                <p class="text-muted small">Posted on: {{ job.created_at[:10] }}</p>
+                <p class="text-muted small">Posted on: {{ job.created_at.strftime('%d %b %Y') }}</p>
             </div>
         </div>
     </div>
