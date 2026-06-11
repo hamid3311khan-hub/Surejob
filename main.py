@@ -79,10 +79,18 @@ def candidate_register():
         db = get_db()
         c = db.cursor()
         try:
-            c.execute("INSERT INTO users (name, email, password, role, location, skills, experience, phone, education, about) VALUES (%s,%s,%s,%s)",
-                      (request.form['name'], request.form['email'], generate_password_hash(request.form['password']),
-                       'candidate', request.form.get('location',''), request.form.get('skills',''),
-                       request.form.get('experience',''), request.form.get('phone',''), request.form.get('education',''), request.form.get('about','')))
+            c.execute("""INSERT INTO users (name, email, password, role, location, skills, experience, phone, education, about) 
+                         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                      (request.form['name'], 
+                       request.form['email'], 
+                       generate_password_hash(request.form['password']),
+                       'candidate', 
+                       request.form.get('location',''), 
+                       request.form.get('skills',''),
+                       request.form.get('experience',''), 
+                       request.form.get('phone',''), 
+                       request.form.get('education',''), 
+                       request.form.get('about','')))
             db.commit()
             flash('Registration successful! Please login', 'success')
             return redirect(url_for('candidate_login'))
@@ -99,9 +107,15 @@ def company_register():
         db = get_db()
         c = db.cursor()
         try:
-            c.execute("INSERT INTO users (name, email, password, role, location, phone, about) VALUES (%s,%s,%s)",
-                      (request.form['name'], request.form['email'], generate_password_hash(request.form['password']),
-                       'company', request.form.get('location',''), request.form.get('phone',''), request.form.get('about','')))
+            c.execute("""INSERT INTO users (name, email, password, role, location, phone, about) 
+                         VALUES (%s,%s,%s,%s,%s,%s,%s)""",
+                      (request.form['name'], 
+                       request.form['email'], 
+                       generate_password_hash(request.form['password']),
+                       'company', 
+                       request.form.get('location',''), 
+                       request.form.get('phone',''), 
+                       request.form.get('about','')))
             db.commit()
             flash('Registration successful! Please login', 'success')
             return redirect(url_for('company_login'))
@@ -183,4 +197,5 @@ def admin_panel():
     return html
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 10000))
+    app.run(host='0.0.0.0', port=port)
