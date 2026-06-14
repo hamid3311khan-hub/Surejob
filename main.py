@@ -1,31 +1,32 @@
+from flask import Flask, g, render_template, request, jsonify
+from db import get_db, init_app
 import os
-from flask import Flask, redirect, url_for, render_template
-from db import init_app
-
-from job_routes import jobs_bp
-from auth_routes import auth_bp  
-from admin_routes import admin_bp
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'surejob-secret-2026')
 
+# db ko app se jod de
 init_app(app)
 
-app.register_blueprint(jobs_bp)
-app.register_blueprint(auth_bp)
-app.register_blueprint(admin_bp)
-
+# Database use karne ka example
 @app.route('/')
 def home():
-    return redirect(url_for('jobs.job_list'))
+    db = get_db()
+    cur = db.cursor()
+    cur.execute('SELECT version();')
+    db_version = cur.fetchone()
+    cur.close()
+    return f"SureJob is Live! DB Connected: {db_version['version']}"
 
-@app.errorhandler(404)
-def not_found(e):
-    return render_template('404.html'), 404
-
-@app.errorhandler(500)
-def server_error(e):
-    return render_template('500.html'), 500
+# Tere purane routes yahan daal de
+# Example:
+# @app.route('/jobs')
+# def get_jobs():
+#     db = get_db()
+#     cur = db.cursor()
+#     cur.execute('SELECT * FROM jobs;')
+#     jobs = cur.fetchall()
+#     cur.close()
+#     return jsonify(jobs)
 
 if __name__ == '__main__':
     app.run(debug=True)
