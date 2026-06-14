@@ -3,30 +3,23 @@ from db import get_db, init_app
 import os
 
 app = Flask(__name__)
-
-# db ko app se jod de
 init_app(app)
 
-# Database use karne ka example
 @app.route('/')
 def home():
-    db = get_db()
-    cur = db.cursor()
-    cur.execute('SELECT version();')
-    db_version = cur.fetchone()
-    cur.close()
-    return f"SureJob is Live! DB Connected: {db_version['version']}"
+    return "SureJob is Live! Server Running ✅"
 
-# Tere purane routes yahan daal de
-# Example:
-# @app.route('/jobs')
-# def get_jobs():
-#     db = get_db()
-#     cur = db.cursor()
-#     cur.execute('SELECT * FROM jobs;')
-#     jobs = cur.fetchall()
-#     cur.close()
-#     return jsonify(jobs)
+@app.route('/db-test')
+def db_test():
+    try:
+        db = get_db()
+        cur = db.cursor()
+        cur.execute('SELECT version();')
+        db_version = cur.fetchone()
+        cur.close()
+        return f"DB Connected: {db_version['version']}"
+    except Exception as e:
+        return f"DB Error: {str(e)}", 500
 
 if __name__ == '__main__':
     app.run(debug=True)
