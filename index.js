@@ -1,15 +1,19 @@
 const express = require('express')
-const path = require('path')
 const app = express()
 const port = process.env.PORT || 10000
 
-// YE 2 LINES SABSE ZARURI HAIN ⚠️
-app.use(express.json()) // API ke liye POST data padhne ke liye
-app.use(express.static('public')) // HTML files serve karne ke liye
+// Tera products wala API route
+app.get('/api/products', (req, res) => {
+  // Yaha tu DB se products fetch karta tha
+  res.json([
+    { id: 1, name: 'Chicken Biryani', price: 250 },
+    { id: 2, name: 'Paneer Tikka', price: 180 }
+  ])
+})
 
-// Home page
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'))
+// Setup wala route
+app.get('/api/setup', (req, res) => {
+  res.json({ status: 'DB Connected' })
 })
 
 // Server start
