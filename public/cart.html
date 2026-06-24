@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Cart - Phatakcart</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    .item { border: 1px solid #ddd; padding: 10px; margin: 10px 0; }
+    .total { font-size: 24px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Your Cart 🛒</h1>
+  <div id="cart-items">Loading...</div>
+  <div class="total" id="total">Total: ₹0</div>
+  <br>
+  <a href="/food.html">← Back to Products</a>
+
+  <script>
+    // Ye page independent hai. Sirf apna data maang raha
+    fetch('/api/cart')
+      .then(res => res.json())
+      .then(cart => {
+        const cartDiv = document.getElementById('cart-items')
+        const totalDiv = document.getElementById('total')
+        
+        if (cart.length === 0) {
+          cartDiv.innerHTML = '<p>Cart is empty</p>'
+          return
+        }
+
+        let total = 0
+        let html = ''
+        
+        cart.forEach(item => {
+          total += item.price * item.qty
+          html += `
+            <div class="item">
+              <h3>${item.name}</h3>
+              <p>Price: ₹${item.price} x ${item.qty} = ₹${item.price * item.qty}</p>
+            </div>
+          `
+        })
+        
+        cartDiv.innerHTML = html
+        totalDiv.innerHTML = `Total: ₹${total}`
+      })
+      .catch(err => {
+        document.getElementById('cart-items').innerHTML = '<p>Error loading cart</p>'
+        console.log(err)
+      })
+  </script>
+</body>
+</html>
