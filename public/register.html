@@ -4,7 +4,7 @@
   <title>Vendor Registration - Phatakcart</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: Arial; background: linear-gradient(135deg, #ff6f00 0%, #ff8f00 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    body { font-family: Arial; background: linear-gradient(135deg, #ff6f00 0%, #ff8f00 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; margin: 0; }
     .box { background: white; padding: 40px; border-radius: 15px; max-width: 500px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
     h1 { color: #ff6f00; text-align: center; margin-bottom: 10px; }
     .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
@@ -42,7 +42,7 @@ async function register() {
   const password = document.getElementById('password').value;
   const address = document.getElementById('address').value;
   
-  if (!shopName || !phone || !password || !address) {
+  if (!shopName ||!phone ||!password ||!address) {
     alert('Saare fields bharo');
     return;
   }
