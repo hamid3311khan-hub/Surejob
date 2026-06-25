@@ -40,6 +40,7 @@ app.get('/api/setup', (req, res) => {
 })
 
 // SERVER START
+app.use('/api/cart', require('./api/cart'))
 app.listen(port, () => {
   console.log(`Server running on port ${port}`)
 })
