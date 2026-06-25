@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Vendor Registration - Phatakcart</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Arial; background: linear-gradient(135deg, #ff6f00 0%, #ff8f00 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .box { background: white; padding: 40px; border-radius: 15px; max-width: 500px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+    h1 { color: #ff6f00; text-align: center; margin-bottom: 10px; }
+    .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
+    input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+    button { background: #00c853; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 10px; }
+    button:hover { background: #00a043; }
+    .plan { background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .price { color: #ff6f00; font-size: 24px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>🏪 Vendor Bano</h1>
+    <p class="subtitle">Apna online shop 5 minute mein shuru karo</p>
+    
+    <input type="text" id="shopName" placeholder="Shop ka Naam" required>
+    <input type="text" id="phone" placeholder="Phone Number" required>
+    <input type="password" id="password" placeholder="Password Banao" required>
+    <textarea id="address" placeholder="Shop ka Address" rows="2" required></textarea>
+    
+    <div class="plan">
+      <strong>Starter Plan</strong>
+      <div class="price">₹499 / month</div>
+      <p style="font-size:13px; color:#666; margin-top:5px;">✓ Unlimited Products ✓ Orders Management ✓ 24/7 Support</p>
+    </div>
+    
+    <button onclick="register()">Register Karo & Shop Banao</button>
+    <p style="text-align:center; margin-top:15px; font-size:14px;">Pehle se account hai? <a href="/vendor" style="color:#ff6f00;">Login karo</a></p>
+  </div>
+
+<script>
+async function register() {
+  const shopName = document.getElementById('shopName').value;
+  const phone = document.getElementById('phone').value;
+  const password = document.getElementById('password').value;
+  const address = document.getElementById('address').value;
+  
+  if (!shopName || !phone || !password || !address) {
+    alert('Saare fields bharo');
+    return;
+  }
+  
+  const res = await fetch('/api/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ shopName, phone, password, address })
+  });
+  
+  const data = await res.json();
+  if (data.success) {
+    alert('Registration successful! Ab login karo');
+    window.location.href = '/vendor';
+  } else {
+    alert('Error: ' + data.message);
+  }
+}
+</script>
+</body>
+</html>
