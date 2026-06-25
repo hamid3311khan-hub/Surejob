@@ -31,7 +31,11 @@ async function loadCart() {
         html += `
           <div class="item">
             <b>${item.name}</b><br>
-            ₹${item.price} x ${item.qty} = ₹${itemTotal}
+            ₹${item.price} x 
+            <button onclick="updateQty(${item.id}, ${item.qty - 1})">-</button>
+            ${item.qty}
+            <button onclick="updateQty(${item.id}, ${item.qty + 1})">+</button>
+            = ₹${itemTotal}
             <button class="remove-btn" onclick="removeItem(${item.id})">Remove</button>
           </div>
         `
@@ -46,19 +50,30 @@ async function loadCart() {
   }
 }
 
-// REMOVE FUNCTION
+async function updateQty(id, newQty) {
+  try {
+    await fetch(`/api/cart/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ qty: newQty })
+    })
+    loadCart()
+  } catch (err) {
+    alert('Quantity update nahi hui')
+  }
+}
+
 async function removeItem(id) {
   if (!confirm('Hata de ye item?')) return
-  
   try {
     await fetch(`/api/cart/${id}`, { method: 'DELETE' })
-    loadCart() // Cart refresh kar de
+    loadCart()
   } catch (err) {
-    alert('Remove nahi hua. Phir try kar.')
+    alert('Remove nahi hua')
   }
 }
 
 loadCart()
-</script>
+      </script>
 </body>
 </html>
