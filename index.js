@@ -47,7 +47,9 @@ app.get('/order', (req, res) => {
 app.get('/payment', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'payment.html'))
 })
-
+app.get('/register', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'register.html'))
+})
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
