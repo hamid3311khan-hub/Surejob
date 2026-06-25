@@ -102,3 +102,17 @@ module.exports = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+app.use('/api/vendor', require('./api/vendor'))
+app.use('/api/products', require('./api/products'))
+app.use('/api/order', require('./api/order'))
+
+app.get('/vendor', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'vendor.html'))
+})
+app.get('/order', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'order.html'))
+})
+app.get('/payment', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'payment.html'))
+})
