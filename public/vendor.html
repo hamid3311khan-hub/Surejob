@@ -2,200 +2,125 @@
 <html>
 <head>
   <title>Vendor Dashboard - Phatakcart</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial; background: #f5f5f5; }
-   .login-box { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 8px; }
-   .dashboard { display: none; padding: 20px; }
-   .nav { background: #ff6f00; color: white; padding: 15px; margin-bottom: 20px; }
-   .nav h2 { display: inline; }
-   .logout { float: right; background: white; color: #ff6f00; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; }
-    input, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 5px; }
-    button { background: #ff6f00; color: white; border: none; padding: 12px; cursor: pointer; width: 100%; border-radius: 5px; margin: 5px 0; }
-    button:hover { background: #e65100; }
-   .tabs { margin: 20px 0; }
-   .tab-btn { background: #ddd; color: #333; width: auto; padding: 10px 20px; margin-right: 10px; }
-   .tab-btn.active { background: #ff6f00; color: white; }
-   .content { background: white; padding: 20px; border-radius: 8px; }
-   .product-card,.order-card { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; }
-   .product-card img { width: 100px; height: 100px; object-fit: cover; border-radius: 5px; }
-   .flex { display: flex; gap: 15px; }
-   .status { padding: 5px 10px; border-radius: 3px; font-size: 12px; }
-   .pending { background: #fff3cd; color: #856404; }
-   .confirmed { background: #d4edda; color: #155724; }
-    select { padding: 8px; border-radius: 5px; }
+    body { font-family: Arial; background: #f5f5f5; margin: 0; padding: 20px; }
+.header { background: #ff6f00; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+.box { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+    input { width: 100%; padding: 12px; margin: 8px 0; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+    button { background: #00c853; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    button:disabled { background: #ccc; }
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+.modal-content { background: white; padding: 30px; border-radius: 15px; max-width: 500px; width: 90%; }
+.file-input { border: 2px dashed #ff6f00; background: #fff9f0; padding: 10px; margin: 8px 0; }
   </style>
 </head>
 <body>
-  <div class="login-box" id="loginBox">
-    <h2>🏪 Vendor Login</h2>
-    <input type="text" id="phone" placeholder="Phone Number" value="9999999999">
-    <input type="password" id="password" placeholder="Password" value="admin123">
+  <div id="loginBox" class="box">
+    <h2>Vendor Login</h2>
+    <input type="text" id="phone" placeholder="Phone Number">
+    <input type="password" id="password" placeholder="Password">
     <button onclick="login()">Login</button>
-    <p style="text-align:center; margin-top:10px; font-size:12px;">Default: 9999999999 / admin123</p>
+    <p style="text-align:center; margin-top:15px;">New ho? <a href="/register">Register karo</a></p>
   </div>
 
-  <div class="dashboard" id="dashboard">
-    <div class="nav">
-      <h2 id="shopName">Dashboard</h2>
-      <button class="logout" onclick="logout()">Logout</button>
+  <div id="dashboard" style="display:none;">
+    <div class="header">
+      <h1>Welcome, <span id="shopName"></span></h1>
+      <p id="status"></p>
     </div>
 
-    <div class="tabs">
-      <button class="tab-btn active" onclick="showTab('products')">My Products</button>
-      <button class="tab-btn" onclick="showTab('orders')">Orders</button>
-      <button class="tab-btn" onclick="showTab('add')">Add Product</button>
+    <div class="box">
+      <h2>Products</h2>
+      <button onclick="openModal()">+ Add New Product</button>
+      <div id="productList" style="margin-top:20px;"></div>
     </div>
+  </div>
 
-    <div class="content" id="content"></div>
+  <!-- Add Product Modal -->
+  <div id="productModal" class="modal">
+    <div class="modal-content">
+      <h2>Add Product</h2>
+      <input type="text" id="pname" placeholder="Product Name *" required>
+      <input type="number" id="pprice" placeholder="Price ₹ *" required>
+      <input type="number" id="pstock" placeholder="Stock Quantity *" required>
+      <div class="file-input">
+        <label>Product Image * (Max 5MB)</label>
+        <input type="file" id="pimage" accept=".jpg,.jpeg,.png" required>
+      </div>
+      <button id="addBtn" onclick="addProduct()">Save Product</button>
+      <button onclick="closeModal()" style="background:#999; margin-top:10px;">Cancel</button>
+    </div>
   </div>
 
 <script>
-let vendorId = null
-let currentTab = 'products'
+let vendorData = null;
 
 async function login() {
-  const res = await fetch('/api/vendor/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      phone: document.getElementById('phone').value,
-      password: document.getElementById('password').value
-    })
-  })
-  const data = await res.json()
-  if (data.success) {
-    vendorId = data.vendor.id
-    document.getElementById('shopName').innerText = data.vendor.shop_name
-    document.getElementById('loginBox').style.display = 'none'
-    document.getElementById('dashboard').style.display = 'block'
-    loadProducts()
-  } else {
-    alert(data.message)
+  const phone = document.getElementById('phone').value;
+  const password = document.getElementById('password').value;
+
+  // Ye API tu baad mein banayega. Abhi dummy
+  alert('Login API baad mein banayenge. Abhi testing ke liye direct dashboard dikha raha hun');
+
+  vendorData = { id: 1, shop_name: 'Test Shop', active: true, kyc_status: 'approved' };
+  document.getElementById('loginBox').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('shopName').innerText = vendorData.shop_name;
+  document.getElementById('status').innerText = vendorData.active? '✅ Active' : '⏳ Pending Approval';
+}
+
+function openModal() {
+  if (!vendorData.active) {
+    alert('Admin approval ke baad hi product add kar sakte ho');
+    return;
   }
+  document.getElementById('productModal').style.display = 'flex';
 }
 
-function logout() {
-  location.reload()
-}
-
-function showTab(tab) {
-  currentTab = tab
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'))
-  event.target.classList.add('active')
-  if (tab === 'products') loadProducts()
-  if (tab === 'orders') loadOrders()
-  if (tab === 'add') showAddForm()
-}
-
-async function loadProducts() {
-  const res = await fetch(`/api/vendor/${vendorId}/products`)
-  const products = await res.json()
-  let html = '<h3>Your Products</h3>'
-  products.forEach(p => {
-    html += `
-      <div class="product-card">
-        <div class="flex">
-          <img src="${p.image_url || 'https://via.placeholder.com/100'}" alt="${p.name}">
-          <div style="flex:1">
-            <h4>${p.name}</h4>
-            <p>Price: ₹${p.price} ${p.offer_price? `| Offer: ₹${p.offer_price}` : ''}</p>
-            <p>${p.description || ''}</p>
-            <p>Status: ${p.active? 'Active' : 'Inactive'}</p>
-            <button onclick="deleteProduct(${p.id})" style="background:red; width:auto; padding:5px 10px;">Delete</button>
-          </div>
-        </div>
-      </div>
-    `
-  })
-  document.getElementById('content').innerHTML = html || '<p>No products yet</p>'
-}
-
-async function loadOrders() {
-  const res = await fetch(`/api/vendor/${vendorId}/orders`)
-  const orders = await res.json()
-  let html = '<h3>Your Orders</h3>'
-  orders.forEach(o => {
-    html += `
-      <div class="order-card">
-        <div class="flex" style="justify-content:space-between; align-items:center;">
-          <div>
-            <h4>${o.order_id}</h4>
-            <p>Customer: ${o.customer_name} | ${o.phone}</p>
-            <p>Address: ${o.address}</p>
-            <p>Total: ₹${o.total} | Payment: ${o.payment_status} (${o.payment_method || 'N/A'})</p>
-            <p>Items: ${o.items.map(i => `${i.name} x${i.qty}`).join(', ')}</p>
-          </div>
-          <div>
-            <span class="status ${o.status.toLowerCase()}">${o.status}</span><br><br>
-            <select onchange="updateStatus('${o.order_id}', this.value)">
-              <option value="">Change Status</option>
-              <option value="Confirmed">Confirm</option>
-              <option value="Preparing">Preparing</option>
-              <option value="Out for Delivery">Out for Delivery</option>
-              <option value="Delivered">Delivered</option>
-              <option value="Cancelled">Cancel</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    `
-  })
-  document.getElementById('content').innerHTML = html || '<p>No orders yet</p>'
-}
-
-function showAddForm() {
-  document.getElementById('content').innerHTML = `
-    <h3>Add New Product</h3>
-    <input type="text" id="pname" placeholder="Product Name" required>
-    <input type="number" id="pprice" placeholder="Original Price" required>
-    <input type="number" id="poffer" placeholder="Offer Price (optional)">
-    <input type="text" id="pimg" placeholder="Image URL (Unsplash/Google)">
-    <textarea id="pdesc" placeholder="Description / Offer Details" rows="3"></textarea>
-    <select id="pcat">
-      <option value="1">Food</option>
-      <option value="2">Dress</option>
-      <option value="3">Grocery</option>
-    </select>
-    <button onclick="addProduct()">Add Product</button>
-  `
+function closeModal() {
+  document.getElementById('productModal').style.display = 'none';
 }
 
 async function addProduct() {
-  const res = await fetch(`/api/vendor/${vendorId}/products`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name: document.getElementById('pname').value,
-      price: parseInt(document.getElementById('pprice').value),
-      offer_price: parseInt(document.getElementById('poffer').value) || null,
-      category: parseInt(document.getElementById('pcat').value),
-      image_url: document.getElementById('pimg').value,
-      description: document.getElementById('pdesc').value
-    })
-  })
-  const data = await res.json()
-  if (data.success) {
-    alert('Product add ho gaya!')
-    showTab('products')
+  const btn = document.getElementById('addBtn');
+  const name = document.getElementById('pname').value;
+  const price = document.getElementById('pprice').value;
+  const stock = document.getElementById('pstock').value;
+  const image = document.getElementById('pimage').files[0];
+
+  if (!name ||!price ||!stock ||!image) {
+    alert('Saare fields bharo');
+    return;
   }
-}
 
-async function deleteProduct(id) {
-  if (!confirm('Delete karna hai?')) return
-  await fetch(`/api/vendor/products/${id}`, { method: 'DELETE' })
-  loadProducts()
-}
+  btn.disabled = true;
+  btn.innerText = 'Uploading...';
 
-async function updateStatus(orderId, status) {
-  if (!status) return
-  await fetch(`/api/vendor/orders/${orderId}/status`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status })
-  })
-  loadOrders()
+  const formData = new FormData();
+  formData.append('vendorId', vendorData.id);
+  formData.append('name', name);
+  formData.append('price', price);
+  formData.append('stock', stock);
+  formData.append('image', image);
+
+  const res = await fetch('/api/add-product', { method: 'POST', body: formData });
+  const data = await res.json();
+
+  if (data.success) {
+    alert('Product added!');
+    closeModal();
+    document.getElementById('pname').value = '';
+    document.getElementById('pprice').value = '';
+    document.getElementById('pstock').value = '';
+    document.getElementById('pimage').value = '';
+  } else {
+    alert('Error: ' + data.message);
+  }
+
+  btn.disabled = false;
+  btn.innerText = 'Save Product';
 }
 </script>
 </body>
-  </html>
+</html>
