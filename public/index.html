@@ -1,32 +1,129 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Phatakcart - Andheri Delivery</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body { font-family: Arial; margin: 0; background: #f5f5f5; }
-      .header { background: #ff6b00; color: white; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; }
-      .cats { display: flex; justify-content: space-around; padding: 15px; }
-      .cat-btn { background: white; border: 2px solid #ff6b00; padding: 15px; border-radius: 10px; font-size: 18px; cursor: pointer; text-decoration: none; color: black; }
-      .cat-btn.active { background: #ff6b00; color: white; }
-      .products { padding: 15px; }
-      .item { background: white; margin: 10px 0; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; }
-      .coming { text-align: center; padding: 50px; font-size: 20px; color: #666; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phatakcart - Home</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: Arial, sans-serif; 
+      background: linear-gradient(135deg, #ff6f00 0%, #ff8f00 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      width: 100%;
+      background: white;
+      border-radius: 20px;
+      padding: 40px 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    .logo {
+      font-size: 50px;
+      margin-bottom: 10px;
+    }
+    h1 { 
+      color: #ff6f00; 
+      margin-bottom: 10px;
+      font-size: 32px;
+    }
+    .tagline {
+      color: #666;
+      margin-bottom: 40px;
+      font-size: 16px;
+    }
+    .menu-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .menu-btn {
+      background: #ff6f00;
+      color: white;
+      border: none;
+      padding: 25px 20px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .menu-btn:hover {
+      background: #e65100;
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(255,111,0,0.4);
+    }
+    .menu-btn .icon {
+      font-size: 35px;
+    }
+    .vendor-btn {
+      background: #00c853;
+      grid-column: 1 / -1;
+    }
+    .vendor-btn:hover {
+      background: #00a043;
+      box-shadow: 0 5px 15px rgba(0,200,83,0.4);
+    }
+    .footer {
+      margin-top: 30px;
+      color: #999;
+      font-size: 14px;
+    }
+    @media (max-width: 480px) {
+      .menu-grid { grid-template-columns: 1fr; }
+      h1 { font-size: 26px; }
+      .container { padding: 30px 20px; }
+    }
+  </style>
 </head>
 <body>
-    <div class="header">PHATAKCART 🚚<br><small>Food, Dress & Grocery</small></div>
-    
-    <div class="cats">
-        <!-- FOOD BUTTON KO LINK BANA DIYA -->
-        <a href="/food" class="cat-btn active">🍗 Food</a>
-        <a href="/dress" class="cat-btn">👗 Dress</a>
-        <a href="/grocery" class="cat-btn">🛒 Grocery</a>
+  <div class="container">
+    <div class="logo">🛒</div>
+    <h1>Phatakcart</h1>
+    <p class="tagline">Sab kuch ek jagah - Food, Dress, Grocery</p>
+
+    <div class="menu-grid">
+      <a href="/food" class="menu-btn">
+        <span class="icon">🍔</span>
+        <span>Food</span>
+      </a>
+      
+      <a href="/dress" class="menu-btn">
+        <span class="icon">👗</span>
+        <span>Dress</span>
+      </a>
+      
+      <a href="/grocery" class="menu-btn">
+        <span class="icon">🛒</span>
+        <span>Grocery</span>
+      </a>
+      
+      <a href="/cart" class="menu-btn">
+        <span class="icon">🛍️</span>
+        <span>Cart</span>
+      </a>
+
+      <a href="/vendor" class="menu-btn vendor-btn">
+        <span class="icon">🏪</span>
+        <span>Vendor Dashboard</span>
+      </a>
     </div>
 
-    <div id="products" class="products">
-        <div class="coming">Food page pe click karo 🍗</div>
+    <div class="footer">
+      <p>Made with ❤️ in Mumbai</p>
     </div>
-
+  </div>
 </body>
-</html>
+          </html>
