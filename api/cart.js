@@ -1,75 +1,73 @@
 const express = require('express')
 const router = express.Router()
+const { Pool } = require('pg')
 
-// SHURU MEIN CART KHALI RAHEGA
-let cartItems = []
-
-// Products ka data - id check kar isme Fortune Oil ka id 10 hai
-const allProducts = [
-  { id: 1, name: 'Chicken Biryani', price: 250 },
-  { id: 2, name: 'Paneer Tikka', price: 180 },
-  { id: 3, name: 'Veg Burger', price: 80 },
-  { id: 4, name: 'Chicken Roll', price: 120 },
-  { id: 5, name: 'Cotton Kurta', price: 599 },
-  { id: 6, name: 'Jeans', price: 899 },
-  { id: 7, name: 'T-Shirt', price: 399 },
-  { id: 8, name: 'Aashirvaad Atta 5kg', price: 280 },
-  { id: 9, name: 'Tata Salt 1kg', price: 25 },
-  { id: 10, name: 'Fortune Oil 1L', price: 130 }  // ID 10 HAI ISKA
-]
-
-// GET /api/cart - Khali cart dikhega ab
-router.get('/', (req, res) => {
-  res.status(200).json(cartItems)
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 })
 
-// POST /api/cart - Add karo
-router.post('/', (req, res) => {
-  const { productId, qty } = req.body
-  
-  const product = allProducts.find(p => p.id == productId)
-  if (!product) {
-    return res.status(404).json({ success: false, message: 'Product nahi mila' })
+// Get cart items
+router.get('/', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT c.id, c.qty, p.id as product_id, p.name, p.price, p.offer_price, p.image_url, p.vendor_id
+      FROM cart c 
+      JOIN products p ON c.product_id = p.id 
+      WHERE c.session_id = 'guest'
+    `)
+    res.json(result.rows)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
   }
-  
-  const existingItem = cartItems.find(item => item.id == productId)
-  
-  if (existingItem) {
-    existingItem.qty += qty
-  } else {
-    cartItems.push({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      qty: qty
-    })
-  }
-  
-  res.status(200).json({ success: true, message: `${product.name} add ho gaya` })
 })
 
-// DELETE /api/cart/:id - REMOVE SYSTEM
-router.delete('/:id', (req, res) => {
-  const id = parseInt(req.params.id)
-  cartItems = cartItems.filter(item => item.id !== id)
-  res.json({ success: true, message: 'Item remove ho gaya' })
-})
-// PUT /api/cart/:id - Quantity Update karo
-router.put('/:id', (req, res) => {
-  const id = parseInt(req.params.id)
-  const { qty } = req.body
-  
-  const item = cartItems.find(item => item.id === id)
-  if (!item) {
-    return res.status(404).json({ success: false })
+// Add to cart
+router.post('/', async (req, res) => {
+  try {
+    const { productId, qty } = req.body
+    
+    const existing = await pool.query(
+      'SELECT * FROM cart WHERE product_id = $1 AND session_id = $2',
+      [productId, 'guest']
+    )
+    
+    if (existing.rows.length > 0) {
+      await pool.query(
+        'UPDATE cart SET qty = qty + $1 WHERE product_id = $2 AND session_id = $3',
+        [qty, productId, 'guest']
+      )
+    } else {
+      await pool.query(
+        'INSERT INTO cart (product_id, qty, session_id) VALUES ($1, $2, $3)',
+        [productId, qty, 'guest']
+      )
+    }
+    
+    res.json({ success: true, message: 'Cart mein add ho gaya' })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
   }
-  
-  item.qty = qty
-  if (item.qty <= 0) {
-    // 0 ho jaye to remove kar do
-    cartItems = cartItems.filter(item => item.id !== id)
-  }
-  
-  res.json({ success: true, message: 'Quantity updated' })
 })
+
+// Remove from cart
+router.delete('/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM cart WHERE id = $1 AND session_id = $2', [req.params.id, 'guest'])
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Clear cart
+router.delete('/', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM cart WHERE session_id = $1', ['guest'])
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 module.exports = router
