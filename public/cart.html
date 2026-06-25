@@ -4,7 +4,8 @@
   <title>Cart - Phatakcart</title>
   <style>
     body { font-family: Arial; padding: 20px; }
-    .item { border: 1px solid #ddd; padding: 10px; margin: 10px 0; }
+    .item { border: 1px solid #ddd; padding: 10px; margin: 10px 0; position: relative; }
+    .remove-btn { background: red; color: white; border: none; padding: 5px 10px; cursor: pointer; position: absolute; right: 10px; top: 10px; }
   </style>
 </head>
 <body>
@@ -15,19 +16,14 @@
 <script>
 async function loadCart() {
   try {
-    console.log('API call kar raha...')
     const res = await fetch('/api/cart')
-    
-    if (!res.ok) throw new Error('API Error: ' + res.status)
-    
     const cart = await res.json()
-    console.log('Cart data:', cart)
     
     let html = ''
     let total = 0
     
     if (cart.length === 0) {
-      html = '<p>Cart khali hai baba. Food page se kuch order kar.</p>'
+      html = '<p>Cart khali hai baba. Food page se kuch add kar.</p>'
     } else {
       cart.forEach(item => {
         const itemTotal = item.price * item.qty
@@ -36,17 +32,29 @@ async function loadCart() {
           <div class="item">
             <b>${item.name}</b><br>
             ₹${item.price} x ${item.qty} = ₹${itemTotal}
+            <button class="remove-btn" onclick="removeItem(${item.id})">Remove</button>
           </div>
         `
       })
     }
     
     document.getElementById('cart-items').innerHTML = html
-    document.getElementById('total').innerText = 'Total: ₹' + total
+    document.getElementById('total').innerText = cart.length > 0 ? 'Total: ₹' + total : ''
     
   } catch (err) {
-    console.error(err)
-    document.getElementById('cart-items').innerHTML = 'Error: ' + err.message + '<br>Refresh karke dekh'
+    document.getElementById('cart-items').innerHTML = 'Error: ' + err.message
+  }
+}
+
+// REMOVE FUNCTION
+async function removeItem(id) {
+  if (!confirm('Hata de ye item?')) return
+  
+  try {
+    await fetch(`/api/cart/${id}`, { method: 'DELETE' })
+    loadCart() // Cart refresh kar de
+  } catch (err) {
+    alert('Remove nahi hua. Phir try kar.')
   }
 }
 
