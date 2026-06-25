@@ -6,120 +6,57 @@
     body { font-family: Arial; padding: 20px; background: #f5f5f5; }
    .nav { margin-bottom: 20px; }
    .nav a { margin-right: 15px; text-decoration: none; color: #333; font-weight: bold; }
-   .cart-badge { background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; }
-   .search-box { width: 100%; padding: 12px; margin-bottom: 20px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-   .products { display: flex; flex-wrap: wrap; gap: 15px; }
-   .product { border: 1px solid #ddd; padding: 15px; width: 240px; text-align: center; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: relative; }
-   .product img { width: 100%; height: 160px; object-fit: cover; border-radius: 6px; }
-   .product h3 { margin: 10px 0 5px 0; font-size: 16px; }
-   .product.shop { font-size: 12px; color: #666; margin-bottom: 5px; }
-   .product.offer { background: #ff0000; color: white; padding: 3px 8px; border-radius: 3px; font-size: 12px; position: absolute; top: 10px; right: 10px; }
-   .product.desc { font-size: 12px; color: #ff6f00; margin: 5px 0; }
-   .product p { font-size: 18px; color: #333; font-weight: bold; margin: 5px 0; }
-   .price-strike { text-decoration: line-through; color: #999; font-size: 14px; }
-   .price-offer { color: #ff0000; font-size: 20px; }
-    button { background: #ff6f00; color: white; border: none; padding: 10px; cursor: pointer; width: 100%; border-radius: 5px; font-size: 15px; margin: 3px 0; }
+   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+   .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+   .card img { width: 100%; height: 200px; object-fit: cover; border-radius: 5px; }
+   .price { color: #ff6f00; font-weight: bold; font-size: 18px; }
+   .offer { color: green; font-size: 14px; }
+   .desc { font-size: 12px; color: #666; margin: 5px 0; }
+    button { background: #ff6f00; color: white; border: none; padding: 10px; cursor: pointer; width: 100%; border-radius: 5px; margin-top: 10px; }
     button:hover { background: #e65100; }
-   .added { background: green!important; }
-   .order-btn { background: #00c853!important; }
   </style>
 </head>
 <body>
   <div class="nav">
-    <a href="/">Home</a>
-    <a href="/food">Food</a>
-    <a href="/cart">Cart 🛒 <span class="cart-badge" id="cart-count">0</span></a>
-    <a href="/vendor" style="float:right;">Vendor Login</a>
+    <a href="/">Home</a> | <a href="/food">Food</a> | <a href="/dress">Dress</a> | <a href="/grocery">Grocery</a> | <a href="/cart">Cart</a> | <a href="/vendor">Vendor</a>
   </div>
-
-  <h1>🍔 Food Items - Best Offers</h1>
-
-  <input type="text" class="search-box" id="searchInput" placeholder="Search Biryani, Pizza..." onkeyup="searchFood()">
-
-  <div class="products" id="productList">Loading...</div>
+  <h1>🍔 Food Items</h1>
+  <div class="grid" id="products">Loading...</div>
 
 <script>
-let allProducts = []
-
 async function loadProducts() {
-  const res = await fetch('/api/products')
-  allProducts = await res.json()
-  renderProducts(allProducts.filter(p => p.category === 1))
-}
-
-function renderProducts(products) {
-  let html = ''
-  products.forEach(p => {
-    const hasOffer = p.offer_price && p.offer_price < p.price
-    html += `
-      <div class="product" data-name="${p.name}">
-        ${hasOffer? '<div class="offer">OFFER</div>' : ''}
-        <img src="${p.image_url || 'https://via.placeholder.com/300'}" alt="${p.name}">
-        <div class="shop">By: ${p.shop_name || 'Phatakcart'}</div>
-        <h3>${p.name}</h3>
-        ${p.description? `<div class="desc">${p.description}</div>` : ''}
-        <p>
-          ${hasOffer? `<span class="price-strike">₹${p.price}</span> ` : ''}
-          <span class="${hasOffer? 'price-offer' : ''}">₹${hasOffer? p.offer_price : p.price}</span>
-        </p>
-        <button onclick="addToCart(${p.id}, this)">Add to Cart</button>
-        <button class="order-btn" onclick="orderNow(${p.id})">Order Now</button>
-      </div>
-    `
-  })
-  document.getElementById('productList').innerHTML = html || '<p>No items found</p>'
-}
-
-async function addToCart(productId, btn) {
-  try {
-    const res = await fetch('/api/cart', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productId, qty: 1 })
-    })
-    const data = await res.json()
-    if (data.success) {
-      btn.innerText = 'Added ✓'
-      btn.classList.add('added')
-      updateCartBadge()
-      setTimeout(() => {
-        btn.innerText = 'Add to Cart'
-        btn.classList.remove('added')
-      }, 1500)
-    }
-  } catch (err) {
-    alert('Error: Add nahi hua')
+  const res = await fetch('/api/products?cat=1')
+  const products = await res.json()
+  const container = document.getElementById('products')
+  
+  if (products.length === 0) {
+    container.innerHTML = '<p>Koi food item nahi mila</p>'
+    return
   }
+  
+  container.innerHTML = products.map(p => `
+    <div class="card">
+      <img src="${p.image_url}" alt="${p.name}">
+      <h3>${p.name}</h3>
+      <p class="desc">${p.description || ''}</p>
+      <p class="price">₹${p.offer_price || p.price}</p>
+      ${p.offer_price ? `<p class="offer">OFFER: ₹${p.price - p.offer_price} OFF</p>` : ''}
+      <button onclick="addToCart(${p.id})">Add to Cart</button>
+    </div>
+  `).join('')
 }
 
-async function orderNow(productId) {
-  await fetch('/api/cart', {
+async function addToCart(id) {
+  const res = await fetch('/api/cart', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ productId, qty: 1 })
+    body: JSON.stringify({ productId: id, qty: 1 })
   })
-  window.location.href = '/order'
-}
-
-function searchFood() {
-  const input = document.getElementById('searchInput').value.toLowerCase()
-  const filtered = allProducts.filter(p =>
-    p.category === 1 && p.name.toLowerCase().includes(input)
-  )
-  renderProducts(filtered)
-}
-
-async function updateCartBadge() {
-  try {
-    const res = await fetch('/api/cart')
-    const cart = await res.json()
-    const totalItems = cart.reduce((sum, item) => sum + item.qty, 0)
-    document.getElementById('cart-count').innerText = totalItems
-  } catch (err) {}
+  const data = await res.json()
+  alert(data.message || 'Cart mein add ho gaya')
 }
 
 loadProducts()
-updateCartBadge()
 </script>
 </body>
-  </html>
+</html>
