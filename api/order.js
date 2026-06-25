@@ -7,72 +7,72 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 })
 
+// Create order
 router.post('/', async (req, res) => {
-  const client = await pool.connect()
   try {
-    await client.query('BEGIN')
     const { customerName, phone, address } = req.body
-
-    const cartResult = await client.query(`
-      SELECT c.qty, p.id, p.name, p.price, p.offer_price, p.vendor_id
-      FROM cart c
-      JOIN products p ON c.product_id = p.id
+    
+    const cartItems = await pool.query(`
+      SELECT c.product_id, c.qty, p.price, p.offer_price, p.vendor_id
+      FROM cart c 
+      JOIN products p ON c.product_id = p.id 
       WHERE c.session_id = 'guest'
     `)
-
-    if (cartResult.rows.length === 0) throw new Error('Cart khali hai')
-
-    // Group by vendor
-    const vendorOrders = {}
-    cartResult.rows.forEach(item => {
-      const price = item.offer_price || item.price
-      if (!vendorOrders[item.vendor_id]) {
-        vendorOrders[item.vendor_id] = { items: [], total: 0 }
-      }
-      vendorOrders[item.vendor_id].items.push({
-        id: item.id, name: item.name, qty: item.qty, price
-      })
-      vendorOrders[item.vendor_id].total += price * item.qty
-    })
-
-    const orderIds = []
-    for (const vendorId in vendorOrders) {
-      const orderId = 'ORD' + Date.now() + vendorId
-      const { items, total } = vendorOrders[vendorId]
-
-      await client.query(
-        'INSERT INTO orders (order_id, vendor_id, customer_name, phone, address, total) VALUES ($1, $2, $3, $4, $5, $6)',
-        [orderId, vendorId, customerName, phone, address, total]
-      )
-
-      for (const item of items) {
-        await client.query(
-          'INSERT INTO order_items (order_id, product_id, qty, price) VALUES ($1, $2, $3, $4)',
-          [orderId, item.id, item.qty, item.price]
-        )
-      }
-      orderIds.push(orderId)
+    
+    if (cartItems.rows.length === 0) {
+      return res.status(400).json({ success: false, error: 'Cart khali hai' })
     }
-
-    await client.query('DELETE FROM cart WHERE session_id = $1', ['guest'])
-    await client.query('COMMIT')
-
-    res.json({ success: true, orderIds, total: Object.values(vendorOrders).reduce((s, o) => s + o.total, 0) })
-
+    
+    const vendorOrders = {}
+    cartItems.rows.forEach(item => {
+      const vid = item.vendor_id
+      if (!vendorOrders[vid]) vendorOrders[vid] = []
+      vendorOrders[vid].push(item)
+    })
+    
+    const orderIds = []
+    let grandTotal = 0
+    
+    for (const vendorId in vendorOrders) {
+      const items = vendorOrders[vendorId]
+      const orderId = 'PH' + Date.now() + vendorId
+      let total = 0
+      
+      items.forEach(item => {
+        total += (item.offer_price || item.price) * item.qty
+      })
+      
+      await pool.query(`
+        INSERT INTO orders (order_id, vendor_id, customer_name, phone, address, total, status, payment_status) 
+        VALUES ($1, $2, $3, $4, $5, $6, 'Pending', 'Unpaid')
+      `, [orderId, vendorId, customerName, phone, address, total])
+      
+      for (const item of items) {
+        await pool.query(`
+          INSERT INTO order_items (order_id, product_id, qty, price) 
+          VALUES ($1, $2, $3, $4)
+        `, [orderId, item.product_id, item.qty, item.offer_price || item.price])
+      }
+      
+      orderIds.push(orderId)
+      grandTotal += total
+    }
+    
+    await pool.query('DELETE FROM cart WHERE session_id = $1', ['guest'])
+    
+    res.json({ success: true, orderIds, total: grandTotal })
   } catch (err) {
-    await client.query('ROLLBACK')
     res.status(500).json({ success: false, error: err.message })
-  } finally {
-    client.release()
   }
 })
 
-router.post('/:id/pay', async (req, res) => {
+// Payment update
+router.post('/:orderId/pay', async (req, res) => {
   try {
     const { paymentMethod } = req.body
     await pool.query(
-      "UPDATE orders SET payment_status = 'Paid', status = 'Confirmed', payment_method = $1 WHERE order_id = $2",
-      [paymentMethod, req.params.id]
+      'UPDATE orders SET payment_status = $1, payment_method = $2, status = $3 WHERE order_id = $4',
+      ['Paid', paymentMethod, 'Confirmed', req.params.orderId]
     )
     res.json({ success: true })
   } catch (err) {
