@@ -1,54 +1,83 @@
 const express = require('express')
 const router = express.Router()
+const { Pool } = require('pg')
 
-let orders = []
-let orderCounter = 1000
-
-// POST /api/order - Order place karo
-router.post('/', (req, res) => {
-  const { items, customerName, address, phone } = req.body
-  
-  if (!items || items.length === 0) {
-    return res.status(400).json({ success: false, message: 'Cart khali hai' })
-  }
-  
-  const total = items.reduce((sum, item) => sum + (item.price * item.qty), 0)
-  const orderId = 'ORD' + orderCounter++
-  
-  const newOrder = {
-    orderId,
-    items,
-    customerName: customerName || 'Guest',
-    address: address || 'Not Provided',
-    phone: phone || 'Not Provided',
-    total,
-    status: 'Pending',
-    paymentStatus: 'Unpaid',
-    date: new Date().toLocaleString()
-  }
-  
-  orders.push(newOrder)
-  res.json({ success: true, orderId, message: 'Order create ho gaya', total })
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 })
 
-// GET /api/order/:id - Order details nikalo
-router.get('/:id', (req, res) => {
-  const order = orders.find(o => o.orderId === req.params.id)
-  if (!order) {
-    return res.status(404).json({ success: false, message: 'Order nahi mila' })
+router.post('/', async (req, res) => {
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    const { customerName, phone, address } = req.body
+
+    const cartResult = await client.query(`
+      SELECT c.qty, p.id, p.name, p.price, p.offer_price, p.vendor_id
+      FROM cart c
+      JOIN products p ON c.product_id = p.id
+      WHERE c.session_id = 'guest'
+    `)
+
+    if (cartResult.rows.length === 0) throw new Error('Cart khali hai')
+
+    // Group by vendor
+    const vendorOrders = {}
+    cartResult.rows.forEach(item => {
+      const price = item.offer_price || item.price
+      if (!vendorOrders[item.vendor_id]) {
+        vendorOrders[item.vendor_id] = { items: [], total: 0 }
+      }
+      vendorOrders[item.vendor_id].items.push({
+        id: item.id, name: item.name, qty: item.qty, price
+      })
+      vendorOrders[item.vendor_id].total += price * item.qty
+    })
+
+    const orderIds = []
+    for (const vendorId in vendorOrders) {
+      const orderId = 'ORD' + Date.now() + vendorId
+      const { items, total } = vendorOrders[vendorId]
+
+      await client.query(
+        'INSERT INTO orders (order_id, vendor_id, customer_name, phone, address, total) VALUES ($1, $2, $3, $4, $5, $6)',
+        [orderId, vendorId, customerName, phone, address, total]
+      )
+
+      for (const item of items) {
+        await client.query(
+          'INSERT INTO order_items (order_id, product_id, qty, price) VALUES ($1, $2, $3, $4)',
+          [orderId, item.id, item.qty, item.price]
+        )
+      }
+      orderIds.push(orderId)
+    }
+
+    await client.query('DELETE FROM cart WHERE session_id = $1', ['guest'])
+    await client.query('COMMIT')
+
+    res.json({ success: true, orderIds, total: Object.values(vendorOrders).reduce((s, o) => s + o.total, 0) })
+
+  } catch (err) {
+    await client.query('ROLLBACK')
+    res.status(500).json({ success: false, error: err.message })
+  } finally {
+    client.release()
   }
-  res.json({ success: true, order })
 })
 
-// POST /api/order/:id/pay - Payment mark karo
-router.post('/:id/pay', (req, res) => {
-  const order = orders.find(o => o.orderId === req.params.id)
-  if (!order) {
-    return res.status(404).json({ success: false })
+router.post('/:id/pay', async (req, res) => {
+  try {
+    const { paymentMethod } = req.body
+    await pool.query(
+      "UPDATE orders SET payment_status = 'Paid', status = 'Confirmed', payment_method = $1 WHERE order_id = $2",
+      [paymentMethod, req.params.id]
+    )
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
   }
-  order.paymentStatus = 'Paid'
-  order.status = 'Confirmed'
-  res.json({ success: true, message: 'Payment success' })
 })
 
 module.exports = router
