@@ -79,5 +79,24 @@ router.post('/:orderId/pay', async (req, res) => {
     res.status(500).json({ error: err.message })
   }
 })
+// Payment update route
+router.post('/:orderId/pay', async (req, res) => {
+  try {
+    const { paymentMethod } = req.body;
+    const result = await pool.query(
+      'UPDATE orders SET payment_method = $1, status = $2 WHERE order_id = $3 RETURNING *',
+      [paymentMethod, 'confirmed', req.params.orderId]
+    );
 
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    res.json({ success: true, message: 'Payment successful', order: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = router;
 module.exports = router
