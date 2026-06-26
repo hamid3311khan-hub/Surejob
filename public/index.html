@@ -3,132 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Multi-Vendor Shop</title>
+  <title>PhatakCart - Sabse Sasta Yahan</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; background: #f5f5f5; }
-    .header { background: #232f3e; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-    .header h1 { font-size: 24px; }
-    .header-buttons button { background: #ff9900; border: none; padding: 8px 15px; margin-left: 10px; cursor: pointer; border-radius: 4px; font-weight: bold; }
-    .categories { background: white; padding: 10px; display: flex; gap: 15px; overflow-x: auto; border-bottom: 1px solid #ddd; }
-    .categories button { background: #f0f0f0; border: 1px solid #ddd; padding: 8px 15px; cursor: pointer; border-radius: 20px; white-space: nowrap; }
-    .categories button.active { background: #ff9900; color: white; border-color: #ff9900; }
-    .products { padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
-    .product-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; }
-    .product-card img { width: 100%; height: 200px; object-fit: cover; }
-    .product-info { padding: 10px; }
-    .product-name { font-size: 14px; margin-bottom: 5px; height: 40px; overflow: hidden; }
-    .product-price { font-weight: bold; font-size: 18px; color: #B12704; }
-    .product-mrp { text-decoration: line-through; color: #666; font-size: 12px; }
-    .seller { font-size: 11px; color: #007185; margin-top: 5px; }
-    .loading { text-align: center; padding: 50px; font-size: 18px; }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+    body { background: #f1f3f6; }
+    .navbar { background: #2c3e50; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+    .navbar h1 { font-size: 24px; }
+    .nav-btn { background: #f39c12; color: white; border: none; padding: 8px 16px; margin: 4px; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; }
+    .categories { background: white; padding: 10px 20px; display: flex; gap: 10px; overflow-x: auto; border-bottom: 1px solid #ddd; }
+    .cat-btn { background: #ecf0f1; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; white-space: nowrap; }
+    .cat-btn.active { background: #f39c12; color: white; }
+    .products { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; padding: 20px; }
+    .product { background: white; border-radius: 8px; padding: 12px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .product img { width: 100%; height: 180px; object-fit: cover; border-radius: 4px; }
+    .product h3 { font-size: 14px; margin: 8px 0; height: 40px; overflow: hidden; }
+    .product .price { color: #e74c3c; font-weight: bold; font-size: 18px; }
+    .add-cart { background: #27ae60; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 8px; }
+    #loading { text-align: center; padding: 40px; font-size: 18px; }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>MyShop</h1>
-    <div class="header-buttons">
-      <button onclick="goToLogin()">Login</button>
-      <button onclick="goToCart()">Cart (<span id="cartCount">0</span>)</button>
-      <button onclick="goToVendor()">Become Seller</button>
+  <div class="navbar">
+    <h1>PhatakCart</h1>
+    <div>
+      <a href="/login.html" class="nav-btn" id="loginBtn">Login</a>
+      <a href="/login.html" class="nav-btn">Become Seller</a>
+      <a href="/cart.html" class="nav-btn" id="cartBtn">Cart (0)</a>
     </div>
   </div>
 
-  <div class="categories">
-    <button class="active" onclick="loadProducts('')">All</button>
-    <button onclick="loadProducts('grocery')">Grocery</button>
-    <button onclick="loadProducts('food')">Food</button>
-    <button onclick="loadProducts('dress')">Dress</button>
-    <button onclick="loadProducts('electronics')">Electronics</button>
-  </div>
-
-  <div id="products" class="products">
-    <div class="loading">Loading products...</div>
-  </div>
-
-  <script>
-    const API_URL = '/api';
-    let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
-
-    // Page load pe products load karo
-    window.onload = function() {
-      loadProducts('');
-      updateCartCount();
-      if (currentUser) {
-        document.querySelector('.header-buttons button').textContent = currentUser.name;
-      }
-    };
-
-    // Products load karne ka function
-    async function loadProducts(category) {
-      document.querySelectorAll('.categories button').forEach(btn => btn.classList.remove('active'));
-      event?.target?.classList.add('active');
-
-      const url = category ? `${API_URL}/products?category=${category}` : `${API_URL}/products`;
-      
-      try {
-        const res = await fetch(url);
-        const data = await res.json();
-        const productsDiv = document.getElementById('products');
-        
-        if (data.products.length === 0) {
-          productsDiv.innerHTML = '<div class="loading">No products found</div>';
-          return;
-        }
-
-        productsDiv.innerHTML = data.products.map(p => `
-          <div class="product-card" onclick="viewProduct(${p.id})">
-            <img src="${p.image_url || 'https://via.placeholder.com/200'}" alt="${p.name}">
-            <div class="product-info">
-              <div class="product-name">${p.name}</div>
-              <div class="product-price">₹${p.offer_price || p.price}</div>
-              ${p.offer_price ? `<div class="product-mrp">M.R.P: ₹${p.price}</div>` : ''}
-              <div class="seller">Sold by: ${p.seller_type === 'admin' ? 'MyShop' : p.shop_name}</div>
-            </div>
-          </div>
-        `).join('');
-      } catch (error) {
-        document.getElementById('products').innerHTML = '<div class="loading">Error loading products</div>';
-      }
-    }
-
-    // Product detail page
-    function viewProduct(id) {
-      window.location.href = `/product.html?id=${id}`;
-    }
-
-    // Cart count update
-    async function updateCartCount() {
-      if (!currentUser) return;
-      try {
-        const res = await fetch(`${API_URL}/cart?action=view&user_id=${currentUser.id}`);
-        const data = await res.json();
-        const count = data.cart.reduce((sum, item) => sum + item.quantity, 0);
-        document.getElementById('cartCount').textContent = count;
-      } catch (error) {}
-    }
-
-    // Buttons
-    function goToLogin() {
-      if (currentUser) {
-        alert('Already logged in as ' + currentUser.name);
-      } else {
-        window.location.href = '/login.html';
-      }
-    }
-
-    function goToCart() {
-      if (!currentUser) {
-        alert('Please login first');
-        window.location.href = '/login.html';
-        return;
-      }
-      window.location.href = '/cart.html';
-    }
-
-    function goToVendor() {
-      window.location.href = '/register.html';
-    }
-  </script>
-</body>
-  </html>
+  <div class="categories"
