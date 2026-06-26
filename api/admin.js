@@ -1,9 +1,8 @@
-const { sql } = require('@vercel/postgres');
-const bcrypt = require('bcryptjs');
-
-module.exports = async (req, res) => {
-  const { action } = req.query;
-
+const { Pool } = require('pg');
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS');
