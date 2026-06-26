@@ -1,61 +1,100 @@
-const express = require('express')
-const router = express.Router()
-const { Pool } = require('pg')
+const { sql } = require('@vercel/postgres');
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-})
+module.exports = async (req, res) => {
+  const { action, category, id } = req.query;
 
-// Get products - category filter ke saath
-router.get('/', async (req, res) => {
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   try {
-    const { cat } = req.query
-    let query = 'SELECT * FROM products WHERE active = true'
-    let params = []
-    
-    if (cat) {
-      query += ' AND category = $1'
-      params.push(parseInt(cat))
+    // 1. SABHI PRODUCTS DIKHAO - Homepage ke liye
+    if (!action && req.method === 'GET') {
+      let query = sql`
+        SELECT
+          p.*,
+          v.shop_name,
+          CASE
+            WHEN p.vendor_id IS NOT NULL THEN 'vendor'
+            WHEN p.admin_id IS NOT NULL THEN 'admin'
+          END as seller_type
+        FROM products p
+        LEFT JOIN vendors v ON p.vendor_id = v.id
+        WHERE p.is_active = true AND p.stock > 0
+      `;
+
+      // Category filter
+      if (category) {
+        query = sql`
+          SELECT
+            p.*,
+            v.shop_name,
+            CASE
+              WHEN p.vendor_id IS NOT NULL THEN 'vendor'
+              WHEN p.admin_id IS NOT NULL THEN 'admin'
+            END as seller_type
+          FROM products p
+          LEFT JOIN vendors v ON p.vendor_id = v.id
+          WHERE p.is_active = true AND p.stock > 0 AND p.category = ${category}
+        `;
+      }
+
+      const result = await query;
+      return res.status(200).json({ products: result.rows });
     }
-    
-    query += ' ORDER BY id DESC'
-    
-    const result = await pool.query(query, params)
-    res.json(result.rows)
-  } catch (err) {
-    console.error('Products API Error:', err)
-    res.status(500).json({ error: err.message })
-  }
-})
 
-// Add product - vendor ke liye
-router.post('/', async (req, res) => {
-  try {
-    const { vendorId, name, price, offerPrice, category, imageUrl, description } = req.body
-    
-    await pool.query(`
-      INSERT INTO products (vendor_id, name, price, offer_price, category, image_url, description, active) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7, true)
-    `, [vendorId, name, price, offerPrice, parseInt(category), imageUrl, description])
-    
-    res.json({ success: true, message: 'Product add ho gaya' })
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message })
-  }
-})
+    // 2. SINGLE PRODUCT DETAIL
+    if (action === 'detail' && req.method === 'GET') {
+      if (!id) return res.status(400).json({ error: 'Product id required' });
 
-// Get vendor products
-router.get('/vendor/:vendorId', async (req, res) => {
-  try {
-    const result = await pool.query(
-      'SELECT * FROM products WHERE vendor_id = $1 ORDER BY id DESC',
-      [req.params.vendorId]
-    )
-    res.json(result.rows)
-  } catch (err) {
-    res.status(500).json({ error: err.message })
-  }
-})
+      const result = await sql`
+        SELECT
+          p.*,
+          v.shop_name, v.owner_name, v.phone,
+          CASE
+            WHEN p.vendor_id IS NOT NULL THEN 'vendor'
+            WHEN p.admin_id IS NOT NULL THEN 'admin'
+          END as seller_type
+        FROM products p
+        LEFT JOIN vendors v ON p.vendor_id = v.id
+        WHERE p.id = ${id} AND p.is_active = true
+      `;
 
-module.exports = router
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Product nahi mila' });
+      }
+
+      return res.status(200).json({ product: result.rows[0] });
+    }
+
+    // 3. ADMIN KE PRODUCTS ADD KARNA
+    if (action === 'admin-add' && req.method === 'POST') {
+      const { admin_id, name, description, price, offer_price, category, image_url, stock } = req.body;
+
+      if (!admin_id ||!name ||!price) {
+        return res.status(400).json({ error: 'admin_id, name, price required hai' });
+      }
+
+      const result = await sql`
+        INSERT INTO products (admin_id, name, description, price, offer_price, category, image_url, stock)
+        VALUES (${admin_id}, ${name}, ${description}, ${price}, ${offer_price}, ${category}, ${image_url}, ${stock})
+        RETURNING *
+      `;
+
+      return res.status(201).json({
+        message: 'Admin product added',
+        product: result.rows[0]
+      });
+    }
+
+    return res.status(404).json({ error: 'Invalid action' });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
