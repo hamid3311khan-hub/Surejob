@@ -1,13 +1,7 @@
 const { Pool } = require('pg');
-const Razorpay = require('razorpay');
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
-});
-
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET
 });
 
 module.exports = async (req, res) => {
@@ -20,6 +14,12 @@ module.exports = async (req, res) => {
 
   try {
     if (action === 'create' && req.method === 'POST') {
+      const Razorpay = require('razorpay');
+      const razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET
+      });
+
       const { user_id, items, total_amount } = req.body;
       
       const razorpayOrder = await razorpay.orders.create({
