@@ -122,5 +122,41 @@ router.put('/orders/:orderId/status', async (req, res) => {
     res.status(500).json({ error: err.message })
   }
 })
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
+// Vendor Login
+router.post('/login', async (req, res) => {
+  try {
+    const { phone, password } = req.body;
+    const result = await pool.query('SELECT * FROM vendors WHERE phone = $1', [phone]);
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'Vendor not found' });
+    }
+
+    const vendor = result.rows[0];
+    const validPass = await bcrypt.compare(password, vendor.password);
+
+    if (!validPass) {
+      return res.status(401).json({ error: 'Wrong password' });
+    }
+
+    const token = jwt.sign({ vendorId: vendor.id }, process.env.JWT_SECRET || 'secret_key_123');
+    res.json({
+      success: true,
+      token,
+      vendor: {
+        id: vendor.id,
+        shop_name: vendor.shop_name,
+        active: vendor.active,
+        kyc_status: vendor.kyc_status
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = router;
 module.exports = router
