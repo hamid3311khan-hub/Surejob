@@ -17,19 +17,24 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-// Static files serve kar - public folder
 app.use(express.static('public'));
 app.use(express.json());
 
-// REGISTER API - YAHAN BAN GAYA
+// TEST ROUTE
+app.get('/api/test', (req, res) => {
+  res.json({ success: true, message: 'API Chal Rahi Hai Baba' });
+});
+
+// REGISTER API
 app.post('/api/register', (req, res) => {
   const form = formidable({
-    maxFileSize: 1.5 * 1024 * 1024,
+    maxFileSize: 1.5 * 1024,
     maxTotalFileSize: 3 * 1024 * 1024,
   });
 
   form.parse(req, async (err, fields, files) => {
     if (err) {
+      console.log('Formidable Error:', err);
       return res.status(400).json({
         success: false,
         message: 'File bahut badi hai. 1.5MB se chhoti rakho'
@@ -72,7 +77,7 @@ app.post('/api/register', (req, res) => {
   });
 });
 
-// VENDOR LOGIN API - YE BHI YAHAN DAAL DE
+// VENDOR LOGIN API
 app.post('/api/vendor-login', async (req, res) => {
   const { phone, password } = req.body;
 
@@ -101,16 +106,20 @@ app.post('/api/vendor-login', async (req, res) => {
 
     res.status(200).json({ success: true, vendor });
   } catch (err) {
+    console.log('Login Error:', err);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
 // ADD PRODUCT API
 app.post('/api/add-product', (req, res) => {
-  const form = formidable({ maxFileSize: 1.5 * 1024 });
+  const form = formidable({ maxFileSize: 1.5 * 1024 * 1024 });
 
   form.parse(req, async (err, fields, files) => {
-    if (err) return res.status(500).json({ success: false, message: 'Upload error' });
+    if (err) {
+      console.log('Upload Error:', err);
+      return res.status(500).json({ success: false, message: 'Upload error' });
+    }
 
     const vendorId = fields.vendorId?.[0];
     const name = fields.name?.[0];
@@ -146,6 +155,7 @@ app.post('/api/add-product', (req, res) => {
 
       res.status(200).json({ success: true, message: 'Product added' });
     } catch (err) {
+      console.log('Product Error:', err);
       res.status(500).json({ success: false, message: err.message });
     }
   });
