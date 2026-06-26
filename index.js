@@ -1,75 +1,53 @@
-import express from 'express';
-import pg from 'pg';
-import formidable from 'formidable';
-import fs from 'fs';
+const express = require('express')
+const path = require('path')
+const app = express()
+const PORT = process.env.PORT || 10000
 
-const { Pool } = pg;
-const app = express();
-const port = process.env.PORT || 10000;
+app.use(express.json())
+app.use(express.static('public'))
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-});
+// Database setup route
+app.use('/api/setup', require('./api/setup'))
 
-app.use(express.static('public'));
-app.use(express.json());
+// API routes
+app.use('/api/vendor', require('./api/vendor'))
+app.use('/api/products', require('./api/products'))
+app.use('/api/cart', require('./api/cart'))
+app.use('/api/order', require('./api/order'))
 
-app.get('/api/test', (req, res) => {
-  res.json({ success: true, message: 'API Chal Rahi Hai Baba' });
-});
+// Page routes
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'))
+})
 
-app.post('/api/register', (req, res) => {
-  const form = formidable({
-    maxFileSize: 1.5 * 1024 * 1024, // ← BAS YE LINE FIX KI HAI. Pehle 1.5 * 1024 tha
-    maxTotalFileSize: 3 * 1024 * 1024, // ← YE BHI FIX KI HAI
-  });
+app.get('/food', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'food.html'))
+})
 
-  form.parse(req, async (err, fields, files) => {
-    if (err) {
-      console.log('Formidable Error:', err);
-      return res.status(400).json({
-        success: false,
-        message: 'File bahut badi hai. 1.5MB se chhoti rakho'
-      });
-    }
+app.get('/dress', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'dress.html'))
+})
 
-    const shopName = fields.shopName?.[0];
-    const phone = fields.phone?.[0];
-    const password = fields.password?.[0];
-    const address = fields.address?.[0];
-    const aadhar = files.aadhar?.[0];
-    const electricity = files.electricity?.[0];
+app.get('/grocery', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'grocery.html'))
+})
 
-    if (!shopName ||!phone ||!password ||!address ||!aadhar ||!electricity) {
-      return res.status(400).json({
-        success: false,
-        message: 'Saare fields aur documents chahiye'
-      });
-    }
+app.get('/cart', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'cart.html'))
+})
 
-    try {
-      const aadharBase64 = 'data:' + aadhar.mimetype + ';base64,' + fs.readFileSync(aadhar.filepath, 'base64');
-      const electricityBase64 = 'data:' + electricity.mimetype + ';base64,' + fs.readFileSync(electricity.filepath, 'base64');
+app.get('/vendor', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'vendor.html'))
+})
 
-      await pool.query(
-        `INSERT INTO vendors (shop_name, phone, password, address, aadhar_url, electricity_bill_url, kyc_status, active)
-         VALUES ($1, $2, $3, $4, $5, $6, 'pending', false)`,
-        [shopName, phone, password, address, aadharBase64, electricityBase64]
-      );
+app.get('/order', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'order.html'))
+})
 
-      res.status(200).json({ success: true, message: 'Registration ho gaya!' });
-    } catch (err) {
-      console.log('DB Error:', err);
-      if (err.code === '23505') {
-        res.status(400).json({ success: false, message: 'Phone number already registered' });
-      } else {
-        res.status(500).json({ success: false, message: 'Database error' });
-      }
-    }
-  });
-});
+app.get('/payment', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'payment.html'))
+})
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
+})
